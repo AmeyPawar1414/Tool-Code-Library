@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+    .kpi-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: none;
+        border-radius: 12px;
+    }
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-size: 24px;
+    }
+    .graph-card {
+        border-radius: 12px;
+        border: none;
+    }
+</style>
+
+<div class="container-fluid py-3">
+
+    <div class="mb-4">
+        <h3 class="text-primary fw-bold mb-0">Dashboard</h3>
+        <p class="text-muted mb-0">
+            Welcome back, <strong>{{ request.user.first_name|default:request.user.username }}</strong>! 
+            <span class="badge bg-secondary ms-2 text-uppercase">{{ role }}</span>
+        </p>
+    </div>
+
+    {% if role == "approver" and approver_focus.urgent_count > 0 %}
+    <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-4" style="border-radius: 12px; background-color: #fff3cd;">
+        <i class="bi bi-exclamation-triangle-fill fs-3 me-3 text-warning"></i>
+        <div>
+            <h6 class="mb-0 fw-bold text-dark">Action Required</h6>
+            <p class="mb-0 text-dark">You have <strong>{{ approver_focus.urgent_count }}</strong> tool requests waiting for your review. <a href="{{ approver_focus.my_actions_url }}" class="alert-link text-decoration-underline">Go to Approval Queue →</a></p>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if role == "admin" %}
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px; background: #f8f9fa;">
+        <div class="card-body py-3">
+            <h6 class="text-muted fw-bold text-uppercase mb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Master Data Overview</h6>
+            <div class="row text-center">
+                <div class="col-3 border-end">
+                    <small class="d-block text-muted">System Users</small>
+                    <span class="fw-bold fs-5 text-primary">{{ admin_stats.total_users }}</span>
+                </div>
+                <div class="col-3 border-end">
+                    <small class="d-block text-muted">Suppliers</small>
+                    <span class="fw-bold fs-5 text-primary">{{ admin_stats.total_suppliers }}</span>
+                </div>
+                <div class="col-3 border-end">
+                    <small class="d-block text-muted">Materials</small>
+                    <span class="fw-bold fs-5 text-primary">{{ admin_stats.total_materials }}</span>
+                </div>
+                <div class="col-3">
+                    <small class="d-block text-muted">Field Types</small>
+                    <span class="fw-bold fs-5 text-primary">{{ admin_stats.field_types }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm bg-primary text-white h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase opacity-75 mb-1">Total Requests</h6>
+                        <h2 class="mb-0 fw-bold">{{ total_reqs }}</h2>
+                    </div>
+                    <div class="icon-box bg-white text-primary bg-opacity-25">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm bg-warning text-dark h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase opacity-75 mb-1">Pending Approval</h6>
+                        <h2 class="mb-0 fw-bold">{{ pending_reqs }}</h2>
+                    </div>
+                    <div class="icon-box bg-dark text-warning bg-opacity-10">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm bg-success text-white h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase opacity-75 mb-1">Approved Tools</h6>
+                        <h2 class="mb-0 fw-bold">{{ approved_reqs }}</h2>
+                    </div>
+                    <div class="icon-box bg-white text-success bg-opacity-25">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card kpi-card shadow-sm bg-danger text-white h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase opacity-75 mb-1">Rejected</h6>
+                        <h2 class="mb-0 fw-bold">{{ rejected_reqs }}</h2>
+                    </div>
+                    <div class="icon-box bg-white text-danger bg-opacity-25">
+                        <i class="bi bi-x-octagon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-5">
+            <div class="card graph-card shadow-sm h-100 p-3">
+                <h5 class="text-muted mb-3">Request Status Overview</h5>
+                <div style="position: relative; height:250px; width:100%; display:flex; justify-content:center;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div class="card graph-card shadow-sm h-100 p-3">
+                <h5 class="text-muted mb-3">Requests by Tool Category</h5>
+                <div style="position: relative; height:250px; width:100%;">
+                    <canvas id="toolTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0" style="border-radius: 12px;">
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+            <h5 class="text-primary fw-bold">Recent Tool Requests</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tool Code</th>
+                            <th>Description</th>
+                            <th>Requested By</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in recent_requests %}
+                        <tr>
+                            <td class="fw-bold text-secondary">{{ req.tool_code|default:"Pending Generation" }}</td>
+                            <td>{{ req.description.field_name }}</td>
+                            <td>{{ req.created_by.username }}</td>
+                            <td>{{ req.created_at|date:"M d, Y" }}</td>
+                            <td>
+                                {% if req.status == 'Approved' %}
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success">Approved</span>
+                                
+                                {% elif req.status == 'Rejected' %}
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger mb-1">Rejected</span>
+                                    
+                                    {% if req.reject_reason %}
+                                        <div class="text-danger mt-1" style="font-size: 0.75rem; max-width: 250px; line-height: 1.2;">
+                                            <i class="bi bi-arrow-return-right me-1"></i><strong>Reason:</strong> {{ req.reject_reason }}
+                                        </div>
+                                    {% endif %}
+                                
+                                {% else %}
+                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">No recent requests found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    
+    const statusData = JSON.parse('{{ status_data|safe }}');
+    const toolLabels = JSON.parse('{{ tool_labels|safe }}');
+    const toolData = JSON.parse('{{ tool_data|safe }}');
+
+    // 1. Status Doughnut Chart
+    const ctxStatus = document.getElementById('statusChart').getContext('2d');
+    new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Approved', 'Rejected'],
+            datasets: [{
+                data: statusData,
+                backgroundColor: ['#ffc107', '#198754', '#dc3545'], 
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
+            cutout: '70%'
+        }
+    });
+
+    // 2. Tool Type Bar Chart
+    const ctxTool = document.getElementById('toolTypeChart').getContext('2d');
+    new Chart(ctxTool, {
+        type: 'bar',
+        data: {
+            labels: toolLabels,
+            datasets: [{
+                label: 'Number of Requests',
+                data: toolData,
+                backgroundColor: 'rgba(42, 82, 152, 0.7)',
+                borderColor: 'rgba(42, 82, 152, 1)',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    ticks: { precision: 0 } 
+                }
+            }
+        }
+    });
+});
+</script>
+
+{% endblock %}

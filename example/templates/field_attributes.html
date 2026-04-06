@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+<div class="card shadow p-4" style="max-width:900px; margin:auto;">
+
+    <h3 class="text-primary mb-4">Field Attributes Master</h3>
+    <p class="text-muted mb-4">
+        For each tool type (Field), define what sub-fields should appear in the
+        Create Code form.
+    </p>
+
+    <!-- FIELD SELECTOR -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Select Field / Tool Type</label>
+        </div>
+        <div class="col-md-8">
+            <select class="form-select" onchange="goToField(this.value)">
+                <option value="">— Select a Field —</option>
+                {% for f in fields %}
+                <option value="{{ f.id }}"
+                    {% if selected_field_id == f.id|stringformat:"s" %}selected{% endif %}>
+                    {{ f.field_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    {% if selected_field %}
+
+    <!-- ADD ATTRIBUTE FORM -->
+    <div class="p-3 bg-light rounded border mb-4">
+        <h5 class="mb-3 text-primary">
+            Add Sub-field for: <strong>{{ selected_field.field_name }}</strong>
+        </h5>
+
+        <form method="POST" action="{% url 'field_attribute_master' %}?field_id={{ selected_field.id }}">
+            {% csrf_token %}
+            <input type="hidden" name="action"   value="add">
+            <input type="hidden" name="field_id" value="{{ selected_field.id }}">
+
+            <div class="row g-2 align-items-end">
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Attribute Name</label>
+                    <input type="text" name="attr_name" class="form-control"
+                           placeholder="e.g. Bore Size" required>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Input Type</label>
+                    <select name="input_type" class="form-select">
+                        <option value="number">Number</option>
+                        <option value="text">Text</option>
+                        <option value="select">Select (Fixed Values)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Order</label>
+                    <input type="number" name="order" class="form-control"
+                           value="{{ attributes|length|add:1 }}" min="0">
+                </div>
+
+                <div class="col-md-2 text-center">
+                    <label class="form-label fw-bold d-block">Required?</label>
+                    <div class="form-check form-switch d-flex justify-content-center mt-1">
+                        <input class="form-check-input" type="checkbox"
+                               name="is_required" checked>
+                    </div>
+                </div>
+
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100">Add</button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <!-- ATTRIBUTES TABLE -->
+    {% if attributes %}
+    <h5 class="mb-3">
+        Configured Sub-fields for {{ selected_field.field_name }}
+    </h5>
+
+    <table class="table table-bordered table-striped align-middle">
+    <thead class="table-primary">
+        <tr>
+            <th>Order</th>
+            <th>Attribute Name</th>
+            <th>Input Type</th>
+            <th>Required</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for attr in attributes %}
+    <tr>
+        <td>{{ attr.order }}</td>
+        <td>{{ attr.attr_name }}</td>
+        <td>
+            <span class="badge bg-secondary">{{ attr.get_input_type_display }}</span>
+        </td>
+        <td>
+            {% if attr.is_required %}
+                <span class="badge bg-success">Yes</span>
+            {% else %}
+                <span class="badge bg-light text-dark border">No</span>
+            {% endif %}
+        </td>
+        <td>
+            <button class="btn btn-warning btn-sm"
+                    onclick="openEdit({{ attr.id }}, '{{ attr.attr_name }}', '{{ attr.input_type }}', {{ attr.is_required|yesno:'true,false' }}, {{ attr.order }})">
+                Edit
+            </button>
+
+            <form method="POST"
+                  action="{% url 'field_attribute_master' %}?field_id={{ selected_field.id }}"
+                  style="display:inline;"
+                  onsubmit="return confirm('Delete this attribute?');">
+                {% csrf_token %}
+                <input type="hidden" name="action"  value="delete">
+                <input type="hidden" name="attr_id" value="{{ attr.id }}">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+
+    {% else %}
+    <div class="alert alert-info">
+        No sub-fields configured yet for <strong>{{ selected_field.field_name }}</strong>.
+        Use the form above to add your first attribute.
+    </div>
+    {% endif %}
+
+    {% endif %}
+
+</div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal fade" id="editModal" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">Edit Attribute</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <form method="POST"
+          action="{% url 'field_attribute_master' %}?field_id={{ selected_field_id }}">
+        {% csrf_token %}
+        <input type="hidden" name="action"  value="edit">
+        <input type="hidden" name="attr_id" id="edit_attr_id">
+        <div class="modal-body">
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Attribute Name</label>
+                <input type="text" name="attr_name" id="edit_attr_name"
+                       class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Input Type</label>
+                <select name="input_type" id="edit_input_type" class="form-select">
+                    <option value="number">Number</option>
+                    <option value="text">Text</option>
+                    <option value="select">Select (Fixed Values)</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Order</label>
+                <input type="number" name="order" id="edit_order"
+                       class="form-control" min="0">
+            </div>
+
+            <div class="mb-3 form-check form-switch">
+                <input class="form-check-input" type="checkbox"
+                       name="is_required" id="edit_is_required">
+                <label class="form-check-label fw-bold">Required</label>
+            </div>
+
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success">Save Changes</button>
+        </div>
+    </form>
+</div>
+</div>
+</div>
+
+<script>
+function goToField(val) {
+    if (val) window.location.href = '/field-attributes/?field_id=' + val;
+}
+
+function openEdit(id, name, inputType, isRequired, order) {
+    document.getElementById('edit_attr_id').value    = id;
+    document.getElementById('edit_attr_name').value  = name;
+    document.getElementById('edit_input_type').value = inputType;
+    document.getElementById('edit_order').value      = order;
+    document.getElementById('edit_is_required').checked = isRequired;
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,645 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4 mb-5">
+
+    <!-- PAGE HEADER -->
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h3 class="text-primary fw-bold mb-3">Tool Codes</h3>
+            
+            <div class="btn-group shadow-sm" role="group" id="status-filter-group">
+                <button type="button" class="btn btn-secondary active" onclick="filterTable('All', this)">All</button>
+                <button type="button" class="btn btn-outline-warning" onclick="filterTable('Pending', this)">Pending</button>
+                <button type="button" class="btn btn-outline-success" onclick="filterTable('Approved', this)">Approved</button>
+                <button type="button" class="btn btn-outline-danger" onclick="filterTable('Rejected', this)">Rejected</button>
+            </div>
+        </div>
+        
+        <button class="btn btn-primary px-4 fw-bold mb-1" data-bs-toggle="modal" data-bs-target="#createCodeModal">
+            + Create Code
+        </button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card shadow-sm border-0" style="border-radius:12px;">
+    <div class="card-body p-0">
+    <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th class="ps-3">ID</th>
+                <th>Tool Code</th>
+                <th>Description</th>
+                <th>Supplier 1</th>
+                <th>Supplier 2</th>
+                <th>Requested By</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for req in requests %}
+        <tr class="tool-row" data-status="{{ req.status }}">
+            <td class="ps-3 text-muted fw-bold">#{{ req.id }}</td>
+            <td class="fw-bold">{{ req.tool_code|default:"—" }}</td>
+            <td>{{ req.description.field_name }}</td>
+            <td>{{ req.supplier1.supplier_name }}</td>
+            <td>{{ req.supplier2.supplier_name|default:"—" }}</td>
+            <td>{{ req.created_by.username }}</td>
+            <td>{{ req.created_at|date:"d M Y" }}</td>
+            <td>
+                {% if req.status == "Approved" %}
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success">Approved</span>
+                {% elif req.status == "Rejected" %}
+                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger">Rejected</span>
+                {% else %}
+                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning">Pending</span>
+                {% endif %}
+            </td>
+            <td>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'review_request' req.id %}" class="btn btn-outline-primary btn-sm">View</a>
+
+                    {% if req.status == "Rejected" and req.created_by == request.user %}
+                    <button class="btn btn-warning btn-sm" onclick="openEditModal({{ req.id }})">Edit</button>
+                    {% endif %}
+
+                    {% if role in "admin,approver" and req.status == "Pending" %}
+                    <form method="POST" action="{% url 'approve_request' req.id %}" style="display:inline;" onsubmit="return confirm('Approve this tool code?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                    </form>
+                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rejectModal" data-url="{% url 'reject_request' req.id %}">Reject</button>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="9" class="text-center text-muted py-5">
+                No tool code requests found.
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+        
+    </table>
+    </div>
+    </div>
+    </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     CREATE CODE MODAL
+════════════════════════════════════════ -->
+<div class="modal fade" id="createCodeModal" tabindex="-1">
+<div class="modal-dialog modal-xl modal-dialog-scrollable">
+<div class="modal-content border-0 shadow">
+
+    <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold">Create Tool Code</h5>
+        <button type="button" class="btn-close btn-close-white"
+                data-bs-dismiss="modal"></button>
+    </div>
+
+    <div class="modal-body p-4">
+    <form method="POST" action="{% url 'tool_code' %}" id="create_code_form">
+    {% csrf_token %}
+    <input type="hidden" name="form_action" value="create">
+
+        <!-- PRIMARY DESCRIPTION -->
+        <div class="row mb-3">
+            <label class="col-md-4 col-form-label fw-bold">
+                Primary Description <span class="text-danger">*</span>
+            </label>
+            <div class="col-md-8">
+                <select name="description" id="primary_description"
+                        class="form-select" onchange="loadFieldData('create')" required>
+                    <option value="">— Select —</option>
+                    {% for field in fields %}
+                    <option value="{{ field.id }}" data-name="{{ field.field_name }}">
+                        {{ field.field_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- SUPPLIER 1 -->
+        <div class="row mb-3">
+            <label class="col-md-4 col-form-label fw-bold">
+                Supplier 1 <span class="text-danger">*</span>
+            </label>
+            <div class="col-md-8">
+                <select name="supplier1" id="supplier1" class="form-select" required
+                        onchange="fillSupplierCode('supplier1','supplier_code1')">
+                    <option value="">— Select Supplier —</option>
+                    {% for s in suppliers %}
+                    <option value="{{ s.id }}" data-code="{{ s.supplier_ordering_code }}">
+                        {{ s.supplier_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <label class="col-md-4 col-form-label fw-bold">Supplier Ordering Code 1</label>
+            <div class="col-md-8">
+                <input type="text" name="supplier_code1" id="supplier_code1"
+                       class="form-control bg-light" readonly>
+            </div>
+        </div>
+
+        <!-- SUPPLIER 2 -->
+        <div class="row mb-3">
+            <label class="col-md-4 col-form-label fw-bold">Supplier 2</label>
+            <div class="col-md-8">
+                <select name="supplier2" id="supplier2" class="form-select"
+                        onchange="fillSupplierCode('supplier2','supplier_code2')">
+                    <option value="">— Select Supplier —</option>
+                    {% for s in suppliers %}
+                    <option value="{{ s.id }}" data-code="{{ s.supplier_ordering_code }}">
+                        {{ s.supplier_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <label class="col-md-4 col-form-label fw-bold">Supplier Ordering Code 2</label>
+            <div class="col-md-8">
+                <input type="text" name="supplier_code2" id="supplier_code2"
+                       class="form-control bg-light" readonly>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- DYNAMIC SECTION -->
+        <div id="dynamic_section_create" style="display:none;">
+        <div class="p-3 bg-light rounded mb-4 border">
+            <h5 class="text-primary mb-3" id="dynamic_title_create"></h5>
+
+            <div class="row mb-3" id="fixed_value_row_create" style="display:none;">
+                <label class="col-md-4 col-form-label fw-bold">Fixed Value</label>
+                <div class="col-md-8">
+                    <select name="fixed_value_id" id="fixed_value_dropdown_create"
+                            class="form-select">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="dynamic_inputs_create"></div>
+
+            <div class="row mb-3">
+                <label class="col-md-4 col-form-label fw-bold">
+                    Joint Type <span class="text-danger">*</span>
+                </label>
+                <div class="col-md-8">
+                    <select name="joint_type" id="joint_type_create" class="form-select" required>
+                        <option value="">— Select —</option>
+                        {% for jt in joint_types %}
+                        <option value="{{ jt.id }}">{{ jt.joint_type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-2">
+                <label class="col-md-4 col-form-label fw-bold">
+                    Raw Material <span class="text-danger">*</span>
+                </label>
+                <div class="col-md-8">
+                    <select name="raw_material" id="raw_material_create"
+                            class="form-select" required>
+                        <option value="">— Select —</option>
+                        {% for rm in raw_materials %}
+                        <option value="{{ rm.id }}">{{ rm.raw_material_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- REMARK -->
+        <div class="row mb-3">
+            <label class="col-md-4 col-form-label fw-bold">Remark</label>
+            <div class="col-md-8">
+                <textarea name="remark" id="remark_create"
+                          class="form-control" rows="3"></textarea>
+            </div>
+        </div>
+
+    </form>
+    </div>
+
+    <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary"
+                data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" form="create_code_form"
+                class="btn btn-primary px-5 fw-bold">Submit Request</button>
+    </div>
+
+</div>
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     EDIT MODAL  (pre-filled for rejected requests)
+════════════════════════════════════════ -->
+<div class="modal fade" id="editCodeModal" tabindex="-1">
+<div class="modal-dialog modal-xl modal-dialog-scrollable">
+<div class="modal-content border-0 shadow">
+
+    <div class="modal-header bg-warning">
+        <h5 class="modal-title fw-bold">Edit Tool Code Request</h5>
+        <button type="button" class="btn-close"
+                data-bs-dismiss="modal"></button>
+    </div>
+
+    <div class="modal-body p-4">
+
+        <!-- Rejection reason banner -->
+        <div id="reject_reason_banner" class="alert alert-danger mb-4" style="display:none;">
+            <strong>Rejection Reason:</strong>
+            <span id="reject_reason_text"></span>
+        </div>
+
+    <form method="POST" action="{% url 'tool_code' %}" id="edit_code_form">
+    {% csrf_token %}
+    <input type="hidden" name="form_action" value="edit">
+    <input type="hidden" name="request_id" id="edit_request_id">
+
+        <div class="row mb-3">
+            <label class="col-md-4 col-form-label fw-bold">
+                Primary Description <span class="text-danger">*</span>
+            </label>
+            <div class="col-md-8">
+                <select name="description" id="edit_primary_description"
+                        class="form-select" onchange="loadFieldData('edit')" required>
+                    <option value="">— Select —</option>
+                    {% for field in fields %}
+                    <option value="{{ field.id }}" data-name="{{ field.field_name }}">
+                        {{ field.field_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <label class="col-md-4 col-form-label fw-bold">
+                Supplier 1 <span class="text-danger">*</span>
+            </label>
+            <div class="col-md-8">
+                <select name="supplier1" id="edit_supplier1" class="form-select" required
+                        onchange="fillSupplierCode('edit_supplier1','edit_supplier_code1')">
+                    <option value="">— Select Supplier —</option>
+                    {% for s in suppliers %}
+                    <option value="{{ s.id }}" data-code="{{ s.supplier_ordering_code }}">
+                        {{ s.supplier_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <label class="col-md-4 col-form-label fw-bold">Supplier Ordering Code 1</label>
+            <div class="col-md-8">
+                <input type="text" name="supplier_code1" id="edit_supplier_code1"
+                       class="form-control bg-light" readonly>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <label class="col-md-4 col-form-label fw-bold">Supplier 2</label>
+            <div class="col-md-8">
+                <select name="supplier2" id="edit_supplier2" class="form-select"
+                        onchange="fillSupplierCode('edit_supplier2','edit_supplier_code2')">
+                    <option value="">— Select Supplier —</option>
+                    {% for s in suppliers %}
+                    <option value="{{ s.id }}" data-code="{{ s.supplier_ordering_code }}">
+                        {{ s.supplier_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <label class="col-md-4 col-form-label fw-bold">Supplier Ordering Code 2</label>
+            <div class="col-md-8">
+                <input type="text" name="supplier_code2" id="edit_supplier_code2"
+                       class="form-control bg-light" readonly>
+            </div>
+        </div>
+
+        <hr>
+
+        <div id="dynamic_section_edit" style="display:none;">
+        <div class="p-3 bg-light rounded mb-4 border">
+            <h5 class="text-primary mb-3" id="dynamic_title_edit"></h5>
+
+            <div class="row mb-3" id="fixed_value_row_edit" style="display:none;">
+                <label class="col-md-4 col-form-label fw-bold">Fixed Value</label>
+                <div class="col-md-8">
+                    <select name="fixed_value_id" id="fixed_value_dropdown_edit"
+                            class="form-select">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="dynamic_inputs_edit"></div>
+
+            <div class="row mb-3">
+                <label class="col-md-4 col-form-label fw-bold">
+                    Joint Type <span class="text-danger">*</span>
+                </label>
+                <div class="col-md-8">
+                    <select name="joint_type" id="edit_joint_type"
+                            class="form-select" required>
+                        <option value="">— Select —</option>
+                        {% for jt in joint_types %}
+                        <option value="{{ jt.id }}">{{ jt.joint_type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-2">
+                <label class="col-md-4 col-form-label fw-bold">
+                    Raw Material <span class="text-danger">*</span>
+                </label>
+                <div class="col-md-8">
+                    <select name="raw_material" id="edit_raw_material"
+                            class="form-select" required>
+                        <option value="">— Select —</option>
+                        {% for rm in raw_materials %}
+                        <option value="{{ rm.id }}">{{ rm.raw_material_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <div class="row mb-3">
+            <label class="col-md-4 col-form-label fw-bold">Remark</label>
+            <div class="col-md-8">
+                <textarea name="remark" id="edit_remark"
+                          class="form-control" rows="3"></textarea>
+            </div>
+        </div>
+
+    </form>
+    </div>
+
+    <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary"
+                data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" form="edit_code_form"
+                class="btn btn-warning px-5 fw-bold">
+            Resubmit Request
+        </button>
+    </div>
+
+</div>
+</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════
+     REJECT MODAL
+════════════════════════════════════════ -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content border-0 shadow">
+    <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">Reject Request</h5>
+        <button type="button" class="btn-close btn-close-white"
+                data-bs-dismiss="modal"></button>
+    </div>
+    <form method="POST" id="rejectForm">
+    {% csrf_token %}
+        <div class="modal-body p-4">
+            <label class="form-label fw-bold">
+                Reason for Rejection <span class="text-danger">*</span>
+            </label>
+            <textarea name="reject_reason" class="form-control" rows="4"
+                      required placeholder="Provide a clear reason..."></textarea>
+        </div>
+        <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger px-4">
+                Confirm Reject
+            </button>
+        </div>
+    </form>
+</div>
+</div>
+</div>
+
+
+<script>
+// ── REJECT MODAL: set form action dynamically ──
+document.getElementById('rejectModal').addEventListener('show.bs.modal', function(e) {
+    document.getElementById('rejectForm').action = e.relatedTarget.getAttribute('data-url');
+});
+
+
+// ── EDIT MODAL: fetch request data and pre-fill form ──
+function openEditModal(requestId) {
+    fetch('/get-request-data/?id=' + requestId)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('edit_request_id').value = requestId;
+
+            // Show rejection reason
+            if (data.reject_reason) {
+                document.getElementById('reject_reason_text').textContent = data.reject_reason;
+                document.getElementById('reject_reason_banner').style.display = 'block';
+            }
+
+            // Set dropdowns
+            setSelect('edit_primary_description', data.description_id);
+            setSelect('edit_supplier1',           data.supplier1_id);
+            setSelect('edit_supplier2',           data.supplier2_id);
+            setSelect('edit_joint_type',          data.joint_type_id);
+            setSelect('edit_raw_material',        data.raw_material_id);
+
+            // Fill supplier codes
+            document.getElementById('edit_supplier_code1').value = data.supplier_code1 || '';
+            document.getElementById('edit_supplier_code2').value = data.supplier_code2 || '';
+
+            // Fill remark
+            document.getElementById('edit_remark').value = data.remark || '';
+
+            // Load dynamic fields then pre-fill attribute values
+            loadFieldData('edit', data.description_id, data.attributes, data.fixed_value_id);
+
+            new bootstrap.Modal(document.getElementById('editCodeModal')).show();
+        });
+}
+
+function setSelect(id, value) {
+    var el = document.getElementById(id);
+    if (el && value) el.value = value;
+}
+
+
+// ── DYNAMIC FIELD LOADER ──
+function loadFieldData(mode, overrideFieldId, prefillAttrs, prefillFixedId) {
+    var prefix = mode === 'edit' ? 'edit_' : '';
+
+    var dropdown    = overrideFieldId
+        ? null
+        : document.getElementById(mode === 'edit' ? 'edit_primary_description' : 'primary_description');
+    var field_id    = overrideFieldId || (dropdown ? dropdown.value : '');
+    var field_name  = overrideFieldId
+        ? (document.querySelector(`#${mode === 'edit' ? 'edit_' : ''}primary_description option[value="${overrideFieldId}"]`) || {}).textContent || ''
+        : (dropdown ? dropdown.options[dropdown.selectedIndex].getAttribute('data-name') : '');
+
+    var suffix      = '_' + (mode === 'edit' ? 'edit' : 'create');
+    var section     = document.getElementById('dynamic_section' + suffix);
+    var inputs      = document.getElementById('dynamic_inputs' + suffix);
+    var fixedRow    = document.getElementById('fixed_value_row' + suffix);
+    var fixedDrop   = document.getElementById('fixed_value_dropdown' + suffix);
+    var title       = document.getElementById('dynamic_title' + suffix);
+
+    section.style.display  = 'none';
+    inputs.innerHTML       = '';
+    fixedRow.style.display = 'none';
+    fixedDrop.innerHTML    = '<option value="">— Select —</option>';
+
+    if (!field_id) return;
+
+    title.textContent      = field_name.trim() + ' Details';
+    section.style.display  = 'block';
+
+    // Load fixed values
+    fetch('/get-fixed-values/?field_id=' + field_id)
+        .then(r => r.json())
+        .then(fvs => {
+            if (fvs.length > 0) {
+                fixedRow.style.display = 'flex';
+                fvs.forEach(fv => {
+                    var opt = document.createElement('option');
+                    opt.value       = fv.id;
+                    opt.textContent = fv.value + ' — ' + fv.explanation;
+                    fixedDrop.appendChild(opt);
+                });
+                if (prefillFixedId) fixedDrop.value = prefillFixedId;
+            }
+        });
+
+    // Load dynamic attributes
+    fetch('/get-field-attributes/?field_id=' + field_id)
+        .then(r => r.json())
+        .then(attrs => {
+            attrs.forEach(attr => {
+                var required     = attr.is_required ? 'required' : '';
+                var requiredStar = attr.is_required ? ' <span class="text-danger">*</span>' : '';
+                var prefillVal   = '';
+
+                if (prefillAttrs) {
+                    var match = prefillAttrs.find(a => a.field_attribute_id == attr.id);
+                    if (match) prefillVal = match.value;
+                }
+
+                var inputHtml = '';
+                if (attr.input_type === 'number') {
+                    inputHtml = `<input type="number" name="attr_${attr.id}"
+                                        class="form-control" min="0" step="any"
+                                        value="${prefillVal}" ${required}>`;
+                } else if (attr.input_type === 'text') {
+                    inputHtml = `<input type="text" name="attr_${attr.id}"
+                                        class="form-control"
+                                        value="${prefillVal}" ${required}>`;
+                } else if (attr.input_type === 'select') {
+                    inputHtml = `<select name="attr_${attr.id}"
+                                         class="form-select" ${required}>
+                                    <option value="">— Select —</option>
+                                 </select>`;
+                    setTimeout(() => {
+                        var sel = document.querySelector(
+                            `#dynamic_inputs${suffix} select[name="attr_${attr.id}"]`);
+                        fetch('/get-fixed-values/?field_id=' + field_id)
+                            .then(r => r.json())
+                            .then(fvs => {
+                                fvs.forEach(fv => {
+                                    var opt = document.createElement('option');
+                                    opt.value       = fv.id;
+                                    opt.textContent = fv.value + ' — ' + fv.explanation;
+                                    if (fv.id == prefillVal) opt.selected = true;
+                                    sel.appendChild(opt);
+                                });
+                            });
+                    }, 150);
+                }
+
+                inputs.innerHTML += `
+                    <div class="row mb-3">
+                        <label class="col-md-4 col-form-label fw-bold">
+                            ${attr.attr_name}${requiredStar}
+                        </label>
+                        <div class="col-md-8">${inputHtml}</div>
+                    </div>`;
+            });
+        });
+}
+
+
+function fillSupplierCode(dropdownId, codeInputId) {
+    var dd   = document.getElementById(dropdownId);
+    var code = dd.options[dd.selectedIndex].getAttribute('data-code');
+    document.getElementById(codeInputId).value = code || '';
+}
+
+// ── TABLE FILTERING ──
+function filterTable(status, clickedBtn) {
+    // 1. Update active styling on the buttons
+    const buttons = document.querySelectorAll('#status-filter-group .btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active', 'btn-secondary', 'btn-warning', 'btn-success', 'btn-danger');
+        
+        // Reset back to outline colors based on text
+        if(btn.innerText === 'All') btn.classList.add('btn-outline-secondary');
+        if(btn.innerText === 'Pending') btn.classList.add('btn-outline-warning');
+        if(btn.innerText === 'Approved') btn.classList.add('btn-outline-success');
+        if(btn.innerText === 'Rejected') btn.classList.add('btn-outline-danger');
+    });
+
+    // Make the clicked button solid
+    clickedBtn.classList.add('active');
+    clickedBtn.classList.remove('btn-outline-secondary', 'btn-outline-warning', 'btn-outline-success', 'btn-outline-danger');
+    
+    if(status === 'All') clickedBtn.classList.add('btn-secondary');
+    if(status === 'Pending') clickedBtn.classList.add('btn-warning');
+    if(status === 'Approved') clickedBtn.classList.add('btn-success');
+    if(status === 'Rejected') clickedBtn.classList.add('btn-danger');
+
+    // 2. Instantly filter the table rows
+    const rows = document.querySelectorAll('.tool-row');
+    rows.forEach(row => {
+        const rowStatus = row.getAttribute('data-status');
+        if (status === 'All' || rowStatus === status) {
+            row.style.display = ''; // Show row
+        } else {
+            row.style.display = 'none'; // Hide row
+        }
+    });
+}
+</script>
+
+{% endblock %}

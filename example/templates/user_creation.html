@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="card shadow p-4" style="max-width:800px; margin:auto;">
+
+        <h3 class="text-primary mb-4">User Creation</h3>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST">
+        {% csrf_token %}
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <label for="fullnameInput" class="form-label">Full Name</label>
+                    <input type="text" id="fullnameInput" name="fullname" class="form-control" required>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="usernameInput" class="form-label">Username</label>
+                    <input type="text" id="usernameInput" name="username" class="form-control" required>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="emailInput" class="form-label">Email</label>
+                    <input type="email" id="emailInput" name="email" class="form-control" required>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="roleSelect" class="form-label">Role</label>
+                    <select id="roleSelect" name="role" class="form-select" required>
+                        <option value="">Select Role</option>
+                        <option value="admin">Admin</option>
+                        <option value="approver">Approver</option>
+                        <option value="user">User</option>
+                    </select>
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <label for="passwordInput" class="form-label">Password</label>
+                    <input type="password" id="passwordInput" name="password" class="form-control" required>
+                </div>
+
+            </div>
+
+            <div class="d-flex justify-content-center mt-3">
+                <button type="submit" class="btn btn-primary me-2">Create User</button>
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

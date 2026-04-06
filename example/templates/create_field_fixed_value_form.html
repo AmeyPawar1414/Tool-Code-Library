@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+<div class="card shadow p-4" style="max-width:900px; margin:auto;">
+
+<h4 class="text-primary mb-4">Create Field Fixed Value</h4>
+
+<!-- FIELD DROPDOWN -->
+
+<div class="row mb-4">
+
+<div class="col-md-3">
+<label class="form-label">Field Name</label>
+</div>
+
+<div class="col-md-6">
+
+<select id="fieldDropdown" class="form-select">
+
+<option value="">Select Field</option>
+
+{% for f in fields %}
+<option value="{{ f.id }}">{{ f.field_name }}</option>
+{% endfor %}
+
+</select>
+
+</div>
+</div>
+
+
+<!-- TABLE -->
+
+<div id="tableContainer" style="display:none;">
+<div class="d-flex justify-content-end mb-2">
+
+<button class="btn btn-primary btn-sm"
+data-bs-toggle="modal"
+data-bs-target="#addModal">
+Add
+</button>
+
+</div>
+<table class="table table-bordered">
+
+<thead class="table-light">
+<tr>
+<th>Fixed Value</th>
+<th>Explanation</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="fixedValueTable">
+</tbody>
+
+</table>
+
+</div>
+
+<!-- ADD MODAL -->
+
+<div class="modal fade" id="addModal" tabindex="-1">
+
+<div class="modal-dialog">
+<div class="modal-content">
+
+<div class="modal-header">
+
+<h5 class="modal-title">Add Fixed Value</h5>
+
+<button type="button"
+class="btn-close"
+data-bs-dismiss="modal">
+</button>
+
+</div>
+
+<form onsubmit="addFixedValue(event)">
+
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+<input type="hidden" name="field_id" id="selectedFieldId">
+
+<div class="modal-body">
+
+<div class="mb-3">
+
+<label>Fixed Value</label>
+
+<input type="text"
+name="value"
+class="form-control"
+required>
+
+</div>
+
+<div class="mb-3">
+
+<label>Explanation</label>
+
+<input type="text"
+name="explanation"
+class="form-control"
+required>
+
+</div>
+
+</div>
+
+<div class="modal-footer">
+
+<button type="submit" class="btn btn-success">
+Save
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+</div>
+
+<!-- MODAL CONTAINER -->
+<div id="modalContainer"></div>
+
+</div>
+</div>
+
+
+<script>
+
+document.getElementById("fieldDropdown").addEventListener("change", function(){
+
+    var field_id = this.value
+    document.getElementById("selectedFieldId").value = field_id
+    if(field_id == ""){
+        document.getElementById("tableContainer").style.display = "none"
+        return
+    }
+
+    fetch("/get-fixed-values/?field_id=" + field_id)
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        var table = document.getElementById("fixedValueTable")
+        var modalContainer = document.getElementById("modalContainer")
+
+        table.innerHTML = ""
+        modalContainer.innerHTML = ""
+
+        data.forEach(function(item){
+
+            table.innerHTML += `
+            <tr id="row${item.id}">
+                <td>${item.value}</td>
+                <td>${item.explanation}</td>
+
+                <td>
+
+                <button class="btn btn-warning btn-sm"
+                data-bs-toggle="modal"
+                data-bs-target="#editModal${item.id}">
+                Edit
+                </button>
+
+                <button class="btn btn-danger btn-sm"
+onclick="deleteFixedValue(${item.id})">
+Delete
+</button>
+
+                </td>
+            </tr>
+            `
+
+
+            modalContainer.innerHTML += `
+
+            <div class="modal fade" id="editModal${item.id}" tabindex="-1">
+
+            <div class="modal-dialog">
+            <div class="modal-content">
+
+            <div class="modal-header">
+
+            <h5 class="modal-title">Edit Fixed Value</h5>
+
+            <button type="button"
+            class="btn-close"
+            data-bs-dismiss="modal">
+            </button>
+
+            </div>
+
+            <form onsubmit="updateFixedValue(event, ${item.id})">
+
+            <input type="hidden"
+            name="csrfmiddlewaretoken"
+            value="{{ csrf_token }}">
+
+            <div class="modal-body">
+
+            <div class="mb-3">
+
+            <label>Fixed Value</label>
+
+            <input type="text"
+            name="value"
+            value="${item.value}"
+            class="form-control">
+
+            </div>
+
+            <div class="mb-3">
+
+            <label>Explanation</label>
+
+            <input type="text"
+            name="explanation"
+            value="${item.explanation}"
+            class="form-control">
+
+            </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+            <button type="submit"
+            class="btn btn-success">
+            Update
+            </button>
+
+            </div>
+
+            </form>
+
+            </div>
+            </div>
+            </div>
+
+            `
+
+        })
+
+        document.getElementById("tableContainer").style.display = "block"
+
+    })
+
+})
+function addFixedValue(event){
+
+event.preventDefault()
+
+var field_id = document.getElementById("selectedFieldId").value
+var value = document.querySelector('#addModal input[name="value"]').value
+var explanation = document.querySelector('#addModal input[name="explanation"]').value
+
+fetch("/add-fixed-value/",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+"X-CSRFToken":"{{ csrf_token }}"
+},
+
+body:JSON.stringify({
+field_id:field_id,
+value:value,
+explanation:explanation
+})
+
+})
+
+.then(response=>response.json())
+
+.then(data=>{
+
+var table = document.getElementById("fixedValueTable")
+var modalContainer = document.getElementById("modalContainer")
+table.innerHTML += `
+
+<tr id="row${data.id}">
+<td>${data.value}</td>
+<td>${data.explanation}</td>
+
+<td>
+
+<button class="btn btn-warning btn-sm"
+data-bs-toggle="modal"
+data-bs-target="#editModal${data.id}">
+Edit
+</button>
+
+<button class="btn btn-danger btn-sm"
+onclick="deleteFixedValue(${data.id})">
+Delete
+</button>
+
+</td>
+
+</tr>
+
+`
+modalContainer.innerHTML += `
+
+<div class="modal fade" id="editModal${data.id}" tabindex="-1">
+
+<div class="modal-dialog">
+<div class="modal-content">
+
+<div class="modal-header">
+<h5 class="modal-title">Edit Fixed Value</h5>
+
+<button type="button" class="btn-close"
+data-bs-dismiss="modal"></button>
+</div>
+
+<form onsubmit="updateFixedValue(event, ${data.id})">
+
+<input type="hidden"
+name="csrfmiddlewaretoken"
+value="{{ csrf_token }}">
+
+<div class="modal-body">
+
+<div class="mb-3">
+<label>Fixed Value</label>
+<input type="text" name="value"
+value="${data.value}" class="form-control">
+</div>
+
+<div class="mb-3">
+<label>Explanation</label>
+<input type="text" name="explanation"
+value="${data.explanation}" class="form-control">
+</div>
+
+</div>
+
+<div class="modal-footer">
+<button type="submit" class="btn btn-success">
+Update
+</button>
+</div>
+
+</form>
+
+</div>
+</div>
+</div>
+
+`
+document.querySelector('#addModal input[name="value"]').value=""
+document.querySelector('#addModal input[name="explanation"]').value=""
+
+var modal = bootstrap.Modal.getInstance(document.getElementById("addModal"))
+modal.hide()
+
+})
+
+}
+
+function deleteFixedValue(id){
+
+fetch("/delete-fixed-value/" + id + "/",{
+method:"POST",
+headers:{
+"X-CSRFToken":"{{ csrf_token }}"
+}
+})
+
+.then(response=>response.json())
+
+.then(data=>{
+
+document.getElementById("row"+id).remove()
+
+})
+
+}
+
+function updateFixedValue(event,id){
+
+event.preventDefault()
+
+var modal = document.querySelector("#editModal"+id)
+
+var value = modal.querySelector('input[name="value"]').value
+var explanation = modal.querySelector('input[name="explanation"]').value
+
+fetch("/edit-fixed-value/"+id+"/",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+"X-CSRFToken":"{{ csrf_token }}"
+},
+
+body:JSON.stringify({
+value:value,
+explanation:explanation
+})
+
+})
+
+.then(response=>response.json())
+
+.then(data=>{
+
+var row = document.getElementById("row"+id)
+
+row.innerHTML = `
+
+<td>${data.value}</td>
+<td>${data.explanation}</td>
+
+<td>
+
+<button class="btn btn-warning btn-sm"
+data-bs-toggle="modal"
+data-bs-target="#editModal${data.id}">
+Edit
+</button>
+
+<button class="btn btn-danger btn-sm"
+onclick="deleteFixedValue(${data.id})">
+Delete
+</button>
+
+</td>
+
+`
+
+var modalInstance = bootstrap.Modal.getInstance(modal)
+modalInstance.hide()
+
+})
+
+}
+</script>
+
+{% endblock %}
