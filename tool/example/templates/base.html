@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <title>Tool Code Library</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'icons/bootstrap-icons.css' %}" rel="stylesheet">
+    
+    <style>
+        /* ── 1. GLOBAL CORPORATE BLUE THEME ── */
+        :root {
+            /* Primary Action Blue (Buttons, Accents) */
+            --bs-primary: #1E488F; 
+            --bs-primary-rgb: 30, 72, 143;
+            /* Sidebar Deep Navy Blue */
+            --sidebar-bg: #0B1B3D; 
+            --sidebar-hover: #162A5A; 
+            --sidebar-submenu: #071126;
+            /* Content Area Light Grey */
+            --body-bg: #f4f6f9;
+        }
+        
+        body {
+            background-color: var(--body-bg);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Override Bootstrap Primary Colors */
+        .btn-primary { background-color: var(--bs-primary); border-color: var(--bs-primary); color: #fff; }
+        .btn-primary:hover { background-color: #15346A; border-color: #15346A; }
+        .text-primary { color: var(--bs-primary) !important; }
+        .bg-primary { background-color: var(--bs-primary) !important; }
+        .badge.bg-primary { background-color: #15346A !important; }
+
+        /* ── 2. SIDEBAR STYLING ── */
+        #sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease; /* 🌟 Smooth sliding animation */
+            z-index: 1040;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+        }
+
+        /* 🌟 NEW: Desktop Minimized State (Slides away to the left) */
+        #sidebar.minimized {
+            margin-left: -260px;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            font-size: 1.25rem;
+            font-weight: 800;
+            border-bottom: 1px solid var(--sidebar-hover);
+            color: #fff;
+            text-decoration: none;
+            letter-spacing: 0.5px;
+        }
+        .sidebar-header i { margin-right: 10px; font-size: 1.4rem; }
+        
+        #sidebar .nav-link {
+            color: #b8c7e0; 
+            padding: 12px 20px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            border-radius: 0;
+            transition: all 0.2s;
+        }
+        #sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
+        
+        #sidebar .nav-link:hover, #sidebar .nav-link[aria-expanded="true"] {
+            background-color: var(--sidebar-hover);
+            color: #ffffff;
+            border-left: 4px solid #ffffff;
+        }
+        
+        /* Active Tab Styling */
+        .nav-link.active-tab {
+            background-color: #ffffff !important;
+            color: var(--sidebar-bg) !important;
+            font-weight: 600;
+            border-left: 4px solid var(--bs-primary);
+        }
+
+        /* Collapsible Submenu */
+        .sidebar-submenu { background-color: var(--sidebar-submenu); }
+        .sidebar-submenu .nav-link {
+            padding: 10px 20px 10px 45px;
+            font-size: 0.9rem;
+            border-left: 4px solid transparent;
+        }
+
+        /* ── 3. MAIN CONTENT AREA ── */
+        #main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            height: 100vh;
+            overflow-y: auto;
+            transition: width 0.3s;
+        }
+        
+        /* Top Navigation Bar */
+        .topbar {
+            background-color: #ffffff;
+            padding: 12px 24px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+
+        /* ── 4. RESPONSIVE DESIGN (MOBILE) ── */
+        @media (max-width: 768px) {
+            #sidebar {
+                margin-left: -260px;
+                position: fixed;
+                height: 100%;
+            }
+            #sidebar.active { margin-left: 0; }
+            
+            #sidebarOverlay {
+                display: none;
+                position: fixed;
+                top: 0; left: 0; width: 100vw; height: 100vh;
+                background: rgba(0,0,0,0.5);
+                z-index: 1035;
+            }
+            #sidebarOverlay.active { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+    {% if request.user.is_authenticated %}
+    {% with role=request.user.userprofile.role %}
+    
+    <div id="sidebarOverlay"></div>
+
+    <nav id="sidebar">
+        <a href="{% url 'dashboard' %}" class="sidebar-header d-flex align-items-center">
+            <i class="bi bi-layers-fill"></i> Tool Code Library
+        </a>
+        
+        {% with current_url=request.resolver_match.url_name %}
+        <div class="nav flex-column mt-3">
+            
+            <a href="{% url 'dashboard' %}" class="nav-link {% if current_url == 'dashboard' %}active-tab{% endif %}">
+                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+            </a>
+
+            {% if role and role.can_access_tool_code %}
+            <a href="{% url 'tool_code' %}" class="nav-link {% if current_url == 'tool_code' %}active-tab{% endif %}">
+                <i class="bi bi-tools"></i> Tool Codes
+            </a>
+            {% endif %}
+
+            {% if role and role.can_access_master %}
+            <a href="#masterSubmenu" data-bs-toggle="collapse" 
+               aria-expanded="{% if current_url == 'create_field_form' or current_url == 'field_attribute_master' or current_url == 'create_field_fixed_value_form' or current_url == 'supplier_master' or current_url == 'raw_material_master' or current_url == 'joint_type_master' or current_url == 'role_master' or current_url == 'format_master' %}true{% else %}false{% endif %}" 
+               class="nav-link d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-database-fill"></i> Master Data</span>
+                <i class="bi bi-chevron-down" style="font-size: 0.8rem; margin-right: 0;"></i>
+            </a>
+            
+            <div class="collapse sidebar-submenu {% if current_url == 'create_field_form' or current_url == 'field_attribute_master' or current_url == 'create_field_fixed_value_form' or current_url == 'supplier_master' or current_url == 'raw_material_master' or current_url == 'joint_type_master' or current_url == 'role_master' or current_url == 'format_master' %}show{% endif %}" id="masterSubmenu">
+                
+                <a href="{% url 'create_field_form' %}" class="nav-link {% if current_url == 'create_field_form' %}text-white fw-bold border-start border-light{% endif %}">Field Form</a>
+                
+                <a href="{% url 'field_attribute_master' %}" class="nav-link {% if current_url == 'field_attribute_master' %}text-white fw-bold border-start border-light{% endif %}">Field Attributes</a>
+                
+                <a href="{% url 'create_field_fixed_value_form' %}" class="nav-link {% if current_url == 'create_field_fixed_value_form' %}text-white fw-bold border-start border-light{% endif %}">Field Fixed Values</a>
+                
+                <a href="{% url 'supplier_master' %}" class="nav-link {% if current_url == 'supplier_master' %}text-white fw-bold border-start border-light{% endif %}">Supplier</a>
+                
+                <a href="{% url 'raw_material_master' %}" class="nav-link {% if current_url == 'raw_material_master' %}text-white fw-bold border-start border-light{% endif %}">Raw Material</a>
+                
+                <a href="{% url 'joint_type_master' %}" class="nav-link {% if current_url == 'joint_type_master' %}text-white fw-bold border-start border-light{% endif %}">Joint Type</a>
+
+                <a href="{% url 'format_master' %}" class="nav-link {% if current_url == 'format_master' %}text-white fw-bold border-start border-light{% endif %}">Format Master</a>
+                
+                {% if role.can_manage_roles %}
+                <a href="{% url 'role_master' %}" class="nav-link {% if current_url == 'role_master' %}text-white fw-bold border-start border-light{% endif %}">
+                    <i class="bi bi-shield-lock-fill me-2"></i> Role Master
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if role and role.can_manage_users %}
+            <a href="{% url 'user_creation' %}" class="nav-link {% if current_url == 'user_creation' %}active-tab{% endif %}">
+                <i class="bi bi-people-fill"></i> User Creation
+            </a>
+            {% endif %}
+
+            {% if role and role.can_access_reports %}
+            <a href="{% url 'master_report' %}" class="nav-link {% if current_url == 'master_report' %}active-tab{% endif %}">
+                <i class="bi bi-bar-chart-fill"></i> Reports
+            </a>
+            {% endif %}
+        </div>
+        {% endwith %}
+
+        <div class="mt-auto mb-3">
+            <a href="{% url 'change_password' %}" class="nav-link {% if request.resolver_match.url_name == 'change_password' %}active-tab{% endif %}" style="font-size: 0.9rem;">
+                <i class="bi bi-key"></i> Change Password
+            </a>
+        </div>
+    </nav>
+    {% endwith %}
+    {% endif %}
+
+    <div id="main-content">
+        
+        {% if request.user.is_authenticated %}
+        <div class="topbar">
+            
+            <button class="btn btn-link text-primary fs-3 p-0 me-3" id="sidebarToggleBtn">
+                <i class="bi bi-list"></i>
+            </button>
+            
+            <div class="ms-auto d-flex align-items-center">
+                <span class="text-muted fw-bold me-2" style="font-size: 0.9rem;">
+                    <i class="bi bi-person-circle me-1" style="color: var(--bs-primary);"></i> {{ request.user.first_name|default:request.user.username }}
+                </span>
+                <span class="badge text-uppercase me-3" style="background-color: var(--sidebar-hover);">{{ request.user.userprofile.role.name|default:"User" }}</span>
+                
+                <a href="#" class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="confirmLogout(event)">
+                    <i class="bi bi-power"></i> Logout
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="container-fluid mt-3 px-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm border-0" style="border-left: 4px solid var(--bs-primary) !important;">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="container-fluid px-4 mt-2 mb-5">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            // 🌟 NEW: Smart Toggle Logic (Adapts to Mobile vs Desktop)
+            if(toggleBtn && sidebar) {
+                toggleBtn.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        // Mobile: Slide in from the left overlay
+                        sidebar.classList.toggle('active');
+                        if(overlay) overlay.classList.toggle('active');
+                    } else {
+                        // Desktop: Slide away completely to give max width
+                        sidebar.classList.toggle('minimized');
+                    }
+                });
+            }
+            
+            if(overlay) {
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                });
+            }
+        });
+
+        
+        function confirmLogout(event) {
+            event.preventDefault(); 
+            
+            Swal.fire({
+                title: 'Ready to leave?',
+                text: "You are about to securely log out of your account.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d', 
+                confirmButtonText: 'Yes, Log Out',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Logging out...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    window.location.href = "{% url 'logout' %}";
+                }
+            });
+        }
+
+        function confirmToggle(event, formElement, itemName) {
+            event.preventDefault(); 
+            
+            Swal.fire({
+                title: 'Change Status?',
+                text: `Are you sure you want to change the status for ${itemName}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#1E488F',
+                cancelButtonColor: '#6c757d', 
+                confirmButtonText: 'Yes, change status!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Updating...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    formElement.submit();
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+<div class="card shadow p-4" style="max-width:960px; margin:auto;">
+
+    <h3 class="text-primary mb-2">Field Attributes Master</h3>
+    <p class="text-muted mb-4">
+        For each tool type, define the sub-fields that appear in the Create Code form.
+        For <strong>Dropdown</strong> type attributes, add the option values before clicking Add.
+    </p>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Select Field / Tool Type</label>
+        </div>
+        <div class="col-md-8">
+            <select class="form-select" onchange="goToField(this.value)">
+                <option value="">— Select a Field —</option>
+                {% for f in fields %}
+                <option value="{{ f.id }}"
+                    {% if selected_field_id == f.id|stringformat:"s" %}selected{% endif %}>
+                    {{ f.field_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    {% if selected_field %}
+
+    <div class="p-3 bg-light rounded border mb-4">
+        <h5 class="mb-3 text-primary">
+            Add Sub-field for: <strong>{{ selected_field.field_name }}</strong>
+        </h5>
+
+        <form method="POST"
+              action="{% url 'field_attribute_master' %}?field_id={{ selected_field.id }}"
+              id="addAttrForm">
+            {% csrf_token %}
+            <input type="hidden" name="action"   value="add">
+            <input type="hidden" name="field_id" value="{{ selected_field.id }}">
+
+            <div class="row g-2 align-items-end mb-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Attribute Name</label>
+                    <input type="text" name="attr_name" id="attr_name"
+                           class="form-control" placeholder="e.g. Bore Size" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Input Type</label>
+                    <select name="input_type" id="input_type_select" class="form-select"
+                            onchange="toggleDropdownBuilder(this.value)">
+                        <option value="number">Number</option>
+                        <option value="text">Text</option>
+                        <option value="select">Select (Dropdown)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Order</label>
+                    <input type="number" name="order" class="form-control"
+                           value="{{ attributes|length|add:1 }}" min="0">
+                </div>
+                <div class="col-md-2 text-center">
+                    <label class="form-label fw-bold d-block">Required?</label>
+                    <div class="form-check form-switch d-flex justify-content-center mt-1">
+                        <input class="form-check-input" type="checkbox" name="is_required" checked>
+                    </div>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Add</button>
+                </div>
+            </div>
+
+            <div id="dropdown_builder" style="display:none;"
+                 class="border rounded p-3 bg-white mt-1">
+                <label class="form-label fw-bold text-info mb-1">
+                    Dropdown Options
+                    <small class="text-muted fw-normal ms-1">Add the values users will choose from</small>
+                </label>
+                <div id="options_preview" class="d-flex flex-wrap gap-2 mb-3 mt-2">
+                    <span id="no_options_msg" class="text-muted small fst-italic">No options added yet</span>
+                </div>
+                <div id="options_hidden_inputs"></div>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="text" id="new_option_input"
+                           class="form-control form-control-sm" style="max-width:260px;"
+                           placeholder="e.g. CARBIDE"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();addOption();}">
+                    <button type="button" class="btn btn-outline-success btn-sm px-3"
+                            onclick="addOption()">+ Add Option</button>
+                    <span class="text-muted small">or press Enter</span>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if attributes %}
+    <h5 class="mb-3">Configured Sub-fields for {{ selected_field.field_name }}</h5>
+
+    <table class="table table-bordered align-middle mb-0">
+    <thead class="table-primary">
+        <tr>
+            <th style="width:60px">Order</th>
+            <th>Attribute Name</th>
+            <th style="width:160px">Input Type</th>
+            <th style="width:90px">Required</th>
+            <th style="width:160px">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for attr in attributes %}
+        <tr class="{% if attr.is_deleted %}opacity-50 bg-light{% endif %}">
+            <td>{{ attr.order }}</td>
+            <td><strong>{{ attr.attr_name }}</strong></td>
+            <td>
+                {% if attr.input_type == 'select' %}
+                    <span class="badge bg-info text-dark">Dropdown</span>
+                {% elif attr.input_type == 'number' %}
+                    <span class="badge bg-secondary">Number</span>
+                {% else %}
+                    <span class="badge bg-secondary">Text</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if attr.is_required %}
+                    <span class="badge bg-success">Yes</span>
+                {% else %}
+                    <span class="badge bg-light text-dark border">No</span>
+                {% endif %}
+            </td>
+            <td style="white-space: nowrap;">
+                
+                {% if attr.input_type == 'select' %}
+                    <button class="btn btn-warning btn-sm"
+                            onclick="openDropdownEdit(
+                                {{ attr.id }},
+                                '{{ attr.attr_name }}',
+                                {{ attr.is_required|yesno:'true,false' }},
+                                {{ attr.order }},
+                                [{% for opt in attr.options.all %}{'id':{{ opt.id }},'val':'{{ opt.option_value }}'}{% if not forloop.last %},{% endif %}{% endfor %}]
+                            )">
+                        Edit
+                    </button>
+                {% else %}
+                    <button class="btn btn-warning btn-sm"
+                            onclick="openSimpleEdit(
+                                {{ attr.id }},
+                                '{{ attr.attr_name }}',
+                                '{{ attr.input_type }}',
+                                {{ attr.is_required|yesno:'true,false' }},
+                                {{ attr.order }}
+                            )">
+                        Edit
+                    </button>
+                {% endif %}
+
+                <form method="POST"
+                      action="{% url 'field_attribute_master' %}?field_id={{ selected_field.id }}"
+                      style="display:inline;"
+                      onsubmit="confirmToggle(event, this, 'this attribute')">
+                    {% csrf_token %}
+                    <input type="hidden" name="action"  value="toggle">
+                    <input type="hidden" name="attr_id" value="{{ attr.id }}">
+                    
+                    {% if attr.is_deleted %}
+                        <button type="submit" class="btn btn-outline-secondary btn-sm fw-bold" title="Click to Make Active">
+                            <i class="bi bi-toggle-off me-1"></i> Inactive
+                        </button>
+                    {% else %}
+                        <button type="submit" class="btn btn-success btn-sm fw-bold shadow-sm" title="Click to Make Inactive">
+                            <i class="bi bi-toggle-on me-1"></i> Active
+                        </button>
+                    {% endif %}
+                </form>
+
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+
+    {% else %}
+    <div class="alert alert-info">
+        No sub-fields configured yet for <strong>{{ selected_field.field_name }}</strong>.
+        Use the form above to add your first attribute.
+    </div>
+    {% endif %}
+
+    {% endif %}
+
+</div>
+</div>
+
+
+<div class="modal fade" id="simpleEditModal" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content border-0 shadow">
+    
+    <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold">Edit Attribute</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+    
+    <form method="POST" action="{% url 'field_attribute_master' %}?field_id={{ selected_field_id }}">
+        {% csrf_token %}
+        <input type="hidden" name="action"  value="edit">
+        <input type="hidden" name="attr_id" id="simple_attr_id">
+        <div class="modal-body p-4">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Attribute Name</label>
+                <input type="text" name="attr_name" id="simple_attr_name" class="form-control bg-light" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Input Type</label>
+                <select name="input_type" id="simple_input_type" class="form-select bg-light">
+                    <option value="number">Number</option>
+                    <option value="text">Text</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Order</label>
+                <input type="number" name="order" id="simple_order" class="form-control bg-light" min="0">
+            </div>
+            <div class="mb-3 form-check form-switch">
+                <input class="form-check-input" type="checkbox" name="is_required" id="simple_is_required">
+                <label class="form-check-label fw-bold">Required</label>
+            </div>
+        </div>
+        <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary fw-bold px-4">Save Changes</button>
+        </div>
+    </form>
+</div>
+</div>
+</div>
+
+
+<div class="modal fade" id="dropdownEditModal" tabindex="-1">
+<div class="modal-dialog modal-lg">
+<div class="modal-content border-0 shadow">
+    
+    <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold">Edit Dropdown Attribute</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+
+    <div class="modal-body p-4">
+        <form method="POST" action="{% url 'field_attribute_master' %}?field_id={{ selected_field_id }}" id="dropdownAttrForm">
+            {% csrf_token %}
+            <input type="hidden" name="action"      value="edit">
+            <input type="hidden" name="input_type"  value="select">
+            <input type="hidden" name="attr_id"     id="dd_attr_id">
+
+            <div class="row g-2 mb-3">
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">Attribute Name</label>
+                    <input type="text" name="attr_name" id="dd_attr_name" class="form-control bg-light" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Order</label>
+                    <input type="number" name="order" id="dd_order" class="form-control bg-light" min="0">
+                </div>
+                <div class="col-md-3 text-center">
+                    <label class="form-label fw-bold d-block">Required?</label>
+                    <div class="form-check form-switch d-flex justify-content-center mt-1">
+                        <input class="form-check-input" type="checkbox" name="is_required" id="dd_is_required">
+                    </div>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold w-100">Save</button>
+                </div>
+            </div>
+        </form>
+
+        <hr class="my-4">
+
+        <p class="fw-bold mb-3">Dropdown Options</p>
+
+        <div id="dd_existing_options" class="d-flex flex-wrap gap-2 mb-4">
+            </div>
+
+        <form method="POST" action="{% url 'field_attribute_master' %}?field_id={{ selected_field_id }}" class="d-flex gap-2 align-items-center" id="addOptionInModalForm">
+            {% csrf_token %}
+            <input type="hidden" name="action"   value="add_option">
+            <input type="hidden" name="attr_id"  id="dd_modal_attr_id">
+            <input type="hidden" name="field_id" value="{{ selected_field_id }}">
+            <input type="text" name="option_value" id="dd_new_option_val" class="form-control form-control-sm bg-light border" style="max-width:240px;" placeholder="New option value..." required>
+            <button type="submit" class="btn btn-outline-success btn-sm px-3 fw-bold">
+                + Add Option
+            </button>
+        </form>
+    </div>
+
+    <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    </div>
+</div>
+</div>
+</div>
+
+<form method="POST"
+      action="{% url 'field_attribute_master' %}?field_id={{ selected_field_id }}"
+      id="softDeleteOptionForm">
+    {% csrf_token %}
+    <input type="hidden" name="action"    value="delete_option">
+    <input type="hidden" name="option_id" id="soft_delete_option_id">
+    <input type="hidden" name="field_id"  value="{{ selected_field_id }}">
+</form>
+
+<script>
+var optionCount = 0;
+
+// ── ADD FORM: dropdown builder toggle ──
+function toggleDropdownBuilder(value) {
+    var builder = document.getElementById('dropdown_builder');
+    builder.style.display = (value === 'select') ? 'block' : 'none';
+    if (value !== 'select') clearOptions();
+}
+
+function addOption() {
+    var input = document.getElementById('new_option_input');
+    var val   = input.value.trim().toUpperCase();
+    if (!val) return;
+    optionCount++;
+    document.getElementById('no_options_msg').style.display = 'none';
+    var preview = document.getElementById('options_preview');
+    var pill    = document.createElement('div');
+    pill.id        = 'pill_' + optionCount;
+    pill.className = 'd-flex align-items-center border rounded px-3 py-1 bg-white shadow-sm';
+    pill.innerHTML =
+        '<span class="me-2 fw-bold">' + val + '</span>' +
+        '<button type="button" class="btn btn-sm p-0 px-1 text-danger border-0 bg-transparent fw-bold" ' +
+        'onclick="removeOption(' + optionCount + ')" title="Remove">&times;</button>';
+    preview.appendChild(pill);
+    var hidden   = document.createElement('input');
+    hidden.type  = 'hidden';
+    hidden.name  = 'dropdown_options';
+    hidden.value = val;
+    hidden.id    = 'hidden_' + optionCount;
+    document.getElementById('options_hidden_inputs').appendChild(hidden);
+    input.value = '';
+    input.focus();
+}
+
+function removeOption(id) {
+    var pill   = document.getElementById('pill_' + id);
+    var hidden = document.getElementById('hidden_' + id);
+    if (pill)   pill.remove();
+    if (hidden) hidden.remove();
+    var remaining = document.getElementById('options_preview').querySelectorAll('.border.rounded');
+    if (remaining.length === 0) {
+        document.getElementById('no_options_msg').style.display = 'inline';
+    }
+}
+
+function clearOptions() {
+    document.getElementById('options_preview').innerHTML =
+        '<span id="no_options_msg" class="text-muted small fst-italic">No options added yet</span>';
+    document.getElementById('options_hidden_inputs').innerHTML = '';
+    optionCount = 0;
+}
+
+
+// ── SIMPLE EDIT MODAL (Number / Text) ──
+function openSimpleEdit(id, name, inputType, isRequired, order) {
+    document.getElementById('simple_attr_id').value       = id;
+    document.getElementById('simple_attr_name').value     = name;
+    document.getElementById('simple_input_type').value    = inputType;
+    document.getElementById('simple_order').value         = order;
+    document.getElementById('simple_is_required').checked = isRequired;
+    new bootstrap.Modal(document.getElementById('simpleEditModal')).show();
+}
+
+
+// ── DROPDOWN EDIT MODAL ──
+function openDropdownEdit(id, name, isRequired, order, options) {
+    document.getElementById('dd_attr_id').value       = id;
+    document.getElementById('dd_attr_name').value     = name;
+    document.getElementById('dd_order').value         = order;
+    document.getElementById('dd_is_required').checked = isRequired;
+    document.getElementById('dd_modal_attr_id').value = id;
+
+    // Render existing options as pills with soft-delete X
+    var container = document.getElementById('dd_existing_options');
+    container.innerHTML = '';
+
+    if (options.length === 0) {
+        container.innerHTML = '<span class="text-muted small fst-italic">No options yet</span>';
+    } else {
+        options.forEach(function(opt) {
+            var pill = document.createElement('div');
+            pill.className = 'd-flex align-items-center border rounded px-3 py-1 bg-white shadow-sm';
+            pill.id = 'modal_pill_' + opt.id;
+            pill.innerHTML =
+                '<span class="me-2 fw-bold">' + opt.val + '</span>' +
+                '<button type="button" ' +
+                '        class="btn btn-sm p-0 px-1 text-danger border-0 bg-transparent fw-bold" ' +
+                '        onclick="softDeleteOption(' + opt.id + ', this)" ' +
+                '        title="Remove">&times;</button>';
+            container.appendChild(pill);
+        });
+    }
+
+    new bootstrap.Modal(document.getElementById('dropdownEditModal')).show();
+}
+
+function softDeleteOption(optionId, btn) {
+    if (!confirm('Remove this option?')) return;
+    document.getElementById('soft_delete_option_id').value = optionId;
+    document.getElementById('softDeleteOptionForm').submit();
+}
+
+
+function goToField(val) {
+    if (val) window.location.href = '/field-attributes/?field_id=' + val;
+}
+</script>
+
+{% endblock %}

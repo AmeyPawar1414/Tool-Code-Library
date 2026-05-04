@@ -1,0 +1,4 @@
+ERROR | 2026-04-14 09:45:27,411 | User ID: 34040 | views | FAILED LOGIN: Invalid attempt for username 'asdf'.
+ERROR | 2026-04-14 09:45:32,984 | User ID: 34040 | views | FAILED LOGIN: Invalid attempt for username 'sdfgh'.
+ERROR | 2026-04-14 09:45:38,166 | User ID: 34040 | views | FAILED LOGIN: Invalid attempt for username 'asdfg'.
+ERROR | 2026-04-14 09:45:42,795 | User ID: 34040 | views | FAILED LOGIN: Invalid attempt for username 'asdf'.

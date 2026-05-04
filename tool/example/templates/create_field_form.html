@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-5 mb-5">
+<div class="card shadow border-0 p-4" style="max-width:900px; margin:auto; border-radius: 12px;">
+
+    <h4 class="text-primary mb-4 fw-bold">Create Field Form</h4>
+
+    <form method="POST">
+    {% csrf_token %}
+
+        <div class="row mb-3">
+            <div class="col-md-3"><label for="fieldNameInput" class="form-label fw-bold">Field Name</label></div>
+            <div class="col-md-9">
+                <input type="text" id="fieldNameInput" name="field_name" class="form-control bg-light" required>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3"><label for="shortCodeInput" class="form-label fw-bold">Short Code</label></div>
+            <div class="col-md-9">
+                <input type="text" id="shortCodeInput" name="short_code" class="form-control bg-light"
+                       placeholder="e.g. BTH, MLT" maxlength="10" required>
+                <small class="text-muted">Used as the prefix in the generated tool code</small>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3"><label class="form-label fw-bold">Field Size Type</label></div>
+            <div class="col-md-9">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="field_size_type" id="radioFixed" value="Fixed" checked>
+                    <label class="form-check-label" for="radioFixed">Fixed</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="field_size_type" id="radioVariable" value="Variable">
+                    <label class="form-check-label" for="radioVariable">Variable</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="field_size_type" id="radioBoth" value="Both">
+                    <label class="form-check-label" for="radioBoth">Both</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="field_size_type" id="radioRange" value="Range">
+                    <label class="form-check-label" for="radioRange">Range</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3"><label for="fieldSizeInput" class="form-label fw-bold">Field Size</label></div>
+            <div class="col-md-3">
+                <input type="number" id="fieldSizeInput" name="field_size" class="form-control bg-light" value="0">
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-3"><label for="fieldMessageInput" class="form-label fw-bold">Field Message</label></div>
+            <div class="col-md-9">
+                <input type="text" id="fieldMessageInput" name="field_message" class="form-control bg-light">
+            </div>
+        </div>
+
+        <div class="text-end">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary px-4 me-2">Close</a>
+            <button type="submit" class="btn btn-primary px-4 fw-bold">Save Field</button>
+        </div>
+
+    </form>
+
+    <hr class="mt-5 mb-4">
+    <h5 class="mb-3 fw-bold text-secondary">Saved Fields</h5>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+            <tr>
+                <th>Field Name</th>
+                <th>Short Code</th>
+                <th>Field Size Type</th>
+                <th>Field Size</th>
+                <th>Field Message</th>
+                <th class="text-center">Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for field in fields %}
+            <tr class="{% if field.is_deleted %}opacity-50 bg-light{% endif %}">
+                <td class="fw-bold">{{ field.field_name }}</td>
+                <td class="font-monospace text-primary">{{ field.short_code }}</td>
+                <td>{{ field.field_size_type }}</td>
+                <td>{{ field.field_size }}</td>
+                <td>{{ field.field_message }}</td>
+                <td class="text-center" style="white-space: nowrap;">
+                    
+                    <form action="{% url 'toggle_field_status' field.id %}" method="POST" style="display: inline;" onsubmit="confirmToggle(event, this, '{{ field.field_name|escapejs }}')">
+                        {% csrf_token %}
+                        {% if field.is_deleted %}
+                            <button type="submit" class="btn btn-outline-secondary btn-sm fw-bold w-100" title="Click to Make Active">
+                                <i class="bi bi-toggle-off me-1 fs-6 align-middle"></i> Inactive
+                            </button>
+                        {% else %}
+                            <button type="submit" class="btn btn-success btn-sm fw-bold shadow-sm w-100" title="Click to Make Inactive">
+                                <i class="bi bi-toggle-on me-1 fs-6 align-middle"></i> Active
+                            </button>
+                        {% endif %}
+                    </form>
+
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No fields saved yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+</div>
+
+{% endblock %}

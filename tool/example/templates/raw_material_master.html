@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow border-0 p-4" style="max-width:800px; margin:auto; border-radius: 12px;">
+
+        <h4 class="text-primary mb-4 fw-bold">Raw Material Master</h4>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="rawMaterialInput" class="form-label fw-bold mt-1">Raw Material</label>
+                </div>
+                <div class="col-md-8">
+                    <input type="text" id="rawMaterialInput" name="raw_material" class="form-control bg-light" placeholder="Enter Raw Material" required>
+                </div>
+            </div>
+
+            <div class="text-end mt-4">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary px-4 me-2">Cancel</a>
+                <button type="submit" class="btn btn-primary fw-bold px-4">Save</button>
+            </div>
+
+        </form>
+        
+        <hr class="mt-5 mb-4">
+
+        <h5 class="mb-3 fw-bold text-secondary">Saved Raw Materials</h5>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Raw Material</th>
+                        <th class="text-center" style="width: 150px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for material in materials %}
+                    <tr class="{% if material.is_deleted %}opacity-50 bg-light{% endif %}">
+                        <td class="align-middle fw-bold">{{ material.raw_material_name }}</td>
+                        <td class="text-center" style="white-space: nowrap;">
+                            
+                            <form action="{% url 'toggle_raw_material_status' material.id %}" method="POST" style="display: inline;" onsubmit="confirmToggle(event, this, '{{ material.raw_material_name|escapejs }}')">
+                                {% csrf_token %}
+                                {% if material.is_deleted %}
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm fw-bold w-100" title="Click to Make Active">
+                                        <i class="bi bi-toggle-off me-1 fs-6 align-middle"></i> Inactive
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-success btn-sm fw-bold shadow-sm w-100" title="Click to Make Inactive">
+                                        <i class="bi bi-toggle-on me-1 fs-6 align-middle"></i> Active
+                                    </button>
+                                {% endif %}
+                            </form>
+
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="text-center text-muted py-4">No raw materials saved yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,21 @@
+INFO | 2026-04-14 09:39:49,558 | User ID: 10936 | middleware | User: 'admin' | IP: 127.0.0.1 | GET / | Status: 200 | Time: 0.017s
+INFO | 2026-04-14 09:39:55,762 | User ID: 10936 | middleware | User: 'admin' | IP: 127.0.0.1 | POST / | Status: 200 | Time: 1.121s
+INFO | 2026-04-14 09:40:02,222 | User ID: 10936 | middleware | User: 'admin' | IP: 127.0.0.1 | POST / | Status: 200 | Time: 1.300s
+INFO | 2026-04-14 09:40:08,242 | User ID: 10936 | middleware | User: 'admin' | IP: 127.0.0.1 | POST / | Status: 200 | Time: 1.138s
+INFO | 2026-04-14 09:40:16,899 | User ID: 10936 | middleware | User: 'admin' | IP: 127.0.0.1 | POST / | Status: 302 | Time: 1.220s
+INFO | 2026-04-14 09:40:17,140 | User ID: 10936 | middleware | User: 'admin' | IP: 127.0.0.1 | GET /dashboard/ | Status: 200 | Time: 0.216s
+INFO | 2026-04-14 09:45:21,156 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | GET / | Status: 200 | Time: 0.016s
+INFO | 2026-04-14 09:45:27,418 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | POST / | Status: 200 | Time: 1.090s
+INFO | 2026-04-14 09:45:32,995 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | POST / | Status: 200 | Time: 1.315s
+INFO | 2026-04-14 09:45:38,177 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | POST / | Status: 200 | Time: 1.135s
+INFO | 2026-04-14 09:45:42,802 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | POST / | Status: 200 | Time: 1.107s
+INFO | 2026-04-14 09:45:49,949 | User ID: 34040 | views | SUCCESS: User 'admin' logged in.
+INFO | 2026-04-14 09:45:49,968 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | POST / | Status: 302 | Time: 1.103s
+INFO | 2026-04-14 09:45:50,120 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | GET /dashboard/ | Status: 200 | Time: 0.138s
+INFO | 2026-04-14 09:47:53,777 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | GET /tool-code/ | Status: 200 | Time: 0.304s
+INFO | 2026-04-14 09:47:59,688 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | GET /get-fixed-values/ | Status: 200 | Time: 0.026s
+INFO | 2026-04-14 09:47:59,693 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | GET /get-field-attributes/ | Status: 200 | Time: 0.036s
+INFO | 2026-04-14 09:48:33,898 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | POST /tool-code/ | Status: 302 | Time: 0.184s
+INFO | 2026-04-14 09:48:34,116 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | GET /tool-code/ | Status: 200 | Time: 0.210s
+INFO | 2026-04-14 09:48:46,133 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | POST /approval/approve/29/ | Status: 302 | Time: 0.043s
+INFO | 2026-04-14 09:48:46,395 | User ID: 34040 | middleware | User: 'admin' | IP: 127.0.0.1 | GET /tool-code/ | Status: 200 | Time: 0.255s

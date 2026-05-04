@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <title>Login | Tool Code Library</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'icons/bootstrap-icons.css' %}" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Synced with your base.html Deep Blue Theme */
+            --bs-primary: #1E488F;
+            --bs-primary-hover: #15346A;
+            --bg-dark-navy: #0B1B3D;
+            --bg-deep-navy: #071126;
+        }
+
+        body {
+            /* Professional subtle gradient using your new navy blues */
+            background: linear-gradient(135deg, var(--bg-deep-navy), var(--bg-dark-navy));
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+        }
+
+        .login-card {
+            width: 400px;
+            border-radius: 12px;
+            padding: 40px 35px;
+            background: #ffffff;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        .brand-icon {
+            font-size: 3rem;
+            color: var(--bs-primary);
+            margin-bottom: 5px;
+        }
+
+        .login-title {
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #1a1a1a;
+            letter-spacing: 0.5px;
+        }
+
+        /* Modern Input Styling */
+        .input-group-text {
+            background-color: #f8f9fa;
+            border-right: none;
+            color: #6c757d;
+        }
+        
+        .form-control {
+            background-color: #f8f9fa;
+            border-left: none;
+            padding: 12px 15px 12px 0;
+        }
+        
+        .form-control:focus {
+            background-color: #ffffff;
+            box-shadow: none;
+            border-color: #dee2e6;
+        }
+        
+        /* When input is focused, change the whole border look */
+        .input-group:focus-within {
+            box-shadow: 0 0 0 0.25rem rgba(30, 72, 143, 0.15);
+            border-radius: 6px;
+        }
+        .input-group:focus-within .form-control,
+        .input-group:focus-within .input-group-text {
+            border-color: var(--bs-primary);
+            background-color: #ffffff;
+        }
+
+        .btn-custom {
+            background: var(--bs-primary);
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            padding: 12px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-custom:hover {
+            background: var(--bs-primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .footer-text {
+            text-align: center;
+            font-size: 0.8rem;
+            margin-top: 25px;
+            color: #a0a0a0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-card">
+
+    <div class="text-center">
+        <i class="bi bi-layers-fill brand-icon"></i>
+        <h3 class="login-title">Tool Code Library</h3>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        {% if error %}
+        <div class="alert alert-danger border-0 shadow-sm" style="border-left: 4px solid #dc3545;" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="mb-3">
+            <label for="usernameInput" class="form-label fw-bold text-secondary small text-uppercase">Username</label>
+            <div class="input-group">
+                <span class="input-group-text rounded-start"><i class="bi bi-person-fill"></i></span>
+                <input type="text" id="usernameInput" name="username" class="form-control rounded-end" placeholder="Enter username" required>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label for="passwordInput" class="form-label fw-bold text-secondary small text-uppercase">Password</label>
+            <div class="input-group">
+                <span class="input-group-text rounded-start"><i class="bi bi-lock-fill"></i></span>
+                <input type="password" id="passwordInput" name="password" class="form-control rounded-end" placeholder="Enter password" required>
+            </div>
+        </div>
+
+        <div class="d-grid mt-4">
+            <button type="submit" class="btn btn-custom text-white">
+                Login
+            </button>
+        </div>
+
+        <div class="footer-text">
+            &copy; 2026 Tool Code Library. All rights reserved.
+        </div>
+
+    </form>
+
+</div>
+
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-primary fw-bold mb-0">
+            <i class="bi bi-bar-chart-fill me-2"></i>Master Tool Report
+        </h3>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4" style="border-radius: 12px; background-color: #f8f9fa;">
+        <div class="card-body p-4">
+            <form method="GET" action="{% url 'master_report' %}" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="fromDate" class="form-label fw-bold text-muted small text-uppercase">From Date</label>
+                    <input type="date" id="fromDate" name="from_date" class="form-control" value="{{ from_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="toDate" class="form-label fw-bold text-muted small text-uppercase">To Date</label>
+                    <input type="date" id="toDate" name="to_date" class="form-control" value="{{ to_date }}">
+                </div>
+                <div class="col-md-6">
+                    <button type="submit" class="btn btn-primary px-4 me-2 shadow-sm">
+                        <i class="bi bi-funnel-fill me-1"></i> Apply Date Filter
+                    </button>
+                    <a href="{% url 'master_report' %}" class="btn btn-outline-secondary px-4">
+                        Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0" style="border-radius: 12px;">
+        
+        <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            
+            <div class="btn-group shadow-sm" role="group" id="status-filter-group">
+                <button type="button" class="btn btn-dark active" onclick="setStatusFilter('All', this)">All</button>
+                <button type="button" class="btn btn-outline-dark" onclick="setStatusFilter('Pending', this)">Pending</button>
+                <button type="button" class="btn btn-outline-dark" onclick="setStatusFilter('Approved', this)">Approved</button>
+                <button type="button" class="btn btn-outline-dark" onclick="setStatusFilter('Rejected', this)">Rejected</button>
+            </div>
+
+            <div class="input-group shadow-sm" style="max-width: 300px;">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Search Tool Code..." onkeyup="setSearch(this.value)">
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="reportTable">
+                    <thead class="table-dark text-start">
+                        <tr>
+                            <th class="ps-4">Created By</th>
+                            <th>Created Date</th>
+                            <th>Tool Code</th>
+                            <th>Primary Description</th>
+                            <th>Supplier 1</th>
+                            <th>Supplier 2</th>
+                            <th>Reviewed By</th>
+                            <th class="text-center pe-4">Status</th>
+                            <th>Download</th> 
+                        </tr>
+                    </thead>
+                    <tbody class="text-start">
+                        {% for req in requests %}
+                        <tr class="report-row">
+                            <td class="ps-4 fw-bold">{{ req.created_by.username }}</td>
+                            <td class="text-muted">{{ req.created_at|date:"d M Y" }}</td>
+                            <td class="font-monospace text-primary fw-bold tool-code-cell">{{ req.tool_code|default:"[Pending]" }}</td>
+                            <td>{{ req.description.field_name }}</td>
+                            <td>{{ req.supplier1.supplier_name }}</td>
+                            <td>{{ req.supplier2.supplier_name|default:"-" }}</td>
+                            <td>
+                                {% if req.reviewed_by %}
+                                    <span class="fw-bold text-muted">{{ req.reviewed_by.get_full_name|default:req.reviewed_by.username }}</span>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td class="text-center pe-4 status-cell">
+                                {% if req.status == "Approved" %}
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success">Approved</span>
+                                {% elif req.status == "Rejected" %}
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger">Rejected</span>
+                                {% else %}
+                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                            <!-- Download column — must be INSIDE the <tr> -->
+                            <td class="text-center">
+                                <a href="{% url 'download_tool_request_pdf' req.id %}"
+                                   class="btn btn-sm btn-outline-danger" title="Download PDF">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-5" id="emptyStateRow">
+                                <i class="bi bi-search fs-1 d-block mb-3 opacity-50"></i>
+                                No tool requests found for the selected date range.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center py-3">
+            <nav aria-label="Table pagination" class="mb-0">
+                <ul class="pagination mb-0" id="paginationContainer"></ul>
+            </nav>
+            <div class="text-muted small">
+                Showing <strong id="recordCount">{{ requests|length }}</strong> record(s)
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let currentSearchQuery = '';
+let currentStatusFilter = 'All'; 
+let currentPage = 1;
+const rowsPerPage = 10;
+
+function setSearch(query) {
+    currentSearchQuery = query.toLowerCase().trim();
+    currentPage = 1; 
+    applyTableLogic();
+}
+
+// Updated to handle active/inactive states of the dark buttons
+function setStatusFilter(status, btnElement) {
+    currentStatusFilter = status;
+    currentPage = 1; 
+    
+    // Manage Button Group Styling
+    if (btnElement) {
+        // 1. Reset all buttons to outline
+        const buttons = document.querySelectorAll('#status-filter-group button');
+        buttons.forEach(btn => {
+            btn.classList.remove('btn-dark', 'active');
+            btn.classList.add('btn-outline-dark');
+        });
+        
+        // 2. Set the clicked button to solid dark
+        btnElement.classList.remove('btn-outline-dark');
+        btnElement.classList.add('btn-dark', 'active');
+    }
+
+    applyTableLogic();
+}
+
+function changePage(page) {
+    currentPage = page;
+    applyTableLogic();
+}
+
+function applyTableLogic() {
+    const allRows = Array.from(document.querySelectorAll('.report-row'));
+    
+    // 1. Filter rows by Search Query AND Status Filter
+    const filteredRows = allRows.filter(row => {
+        const toolCodeText = row.querySelector('.tool-code-cell').innerText.toLowerCase();
+        const statusText = row.querySelector('.status-cell').innerText.trim();
+        
+        const matchesSearch = toolCodeText.includes(currentSearchQuery);
+        const matchesStatus = (currentStatusFilter === 'All') || (statusText === currentStatusFilter);
+
+        return matchesSearch && matchesStatus;
+    });
+
+    // 2. Hide all rows initially
+    allRows.forEach(row => row.style.display = 'none');
+
+    // 3. Slice the filtered array to get only the rows for the current page
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const rowsToShow = filteredRows.slice(startIndex, endIndex);
+
+    // 4. Show those specific rows
+    rowsToShow.forEach(row => row.style.display = '');
+
+    // 5. Update Record Count 
+    document.getElementById('recordCount').innerText = filteredRows.length;
+
+    // 6. Build Pagination Buttons dynamically
+    buildPaginationControls(filteredRows.length);
+}
+
+function buildPaginationControls(totalVisibleRows) {
+    const paginationContainer = document.getElementById('paginationContainer');
+    paginationContainer.innerHTML = ''; 
+    
+    const totalPages = Math.ceil(totalVisibleRows / rowsPerPage);
+    if (totalPages <= 1) return; 
+
+    const prevDisabled = currentPage === 1 ? 'disabled' : '';
+    paginationContainer.innerHTML += `
+        <li class="page-item ${prevDisabled}">
+            <a class="page-link text-dark" href="javascript:void(0)" onclick="changePage(${currentPage - 1})">Previous</a>
+        </li>
+    `;
+
+    for (let i = 1; i <= totalPages; i++) {
+        const activeClass = i === currentPage ? 'active bg-dark border-dark text-white' : 'text-dark';
+        paginationContainer.innerHTML += `
+            <li class="page-item">
+                <a class="page-link ${activeClass}" href="javascript:void(0)" onclick="changePage(${i})">${i}</a>
+            </li>
+        `;
+    }
+
+    const nextDisabled = currentPage === totalPages ? 'disabled' : '';
+    paginationContainer.innerHTML += `
+        <li class="page-item ${nextDisabled}">
+            <a class="page-link text-dark" href="javascript:void(0)" onclick="changePage(${currentPage + 1})">Next</a>
+        </li>
+    `;
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    applyTableLogic();
+});
+</script>
+{% endblock %}

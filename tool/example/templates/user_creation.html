@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container-fluid py-4 mb-5">
+    
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            
+            <div class="card shadow-sm border-0" style="border-radius: 12px;">
+                
+                <div class="card-header bg-white border-bottom p-4">
+                    <h4 class="text-primary fw-bold mb-0">
+                        <i class="bi bi-person-plus-fill me-2"></i>Create New User
+                    </h4>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show border-0 shadow-sm" style="border-left: 4px solid var(--bs-primary) !important;" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="POST" id="userCreationForm" class="needs-validation" novalidate>
+                    {% csrf_token %}
+
+                        <div class="row g-4">
+
+                            <div class="col-md-6">
+                                <label for="fullnameInput" class="form-label fw-bold text-secondary small text-uppercase">Full Name <span class="text-danger">*</span></label>
+                                <input type="text" id="fullnameInput" name="fullname" class="form-control bg-light" required>
+                                <div class="invalid-feedback">Please enter the user's full name.</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="usernameInput" class="form-label fw-bold text-secondary small text-uppercase">Username <span class="text-danger">*</span></label>
+                                <input type="text" id="usernameInput" name="username" class="form-control bg-light" required>
+                                <div class="invalid-feedback">Please enter a unique username.</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="emailInput" class="form-label fw-bold text-secondary small text-uppercase">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" id="emailInput" name="email" class="form-control bg-light" 
+                                       pattern="^[a-zA-Z0-9._%+\-]+@gmail\.com$" 
+                                       placeholder="example@gmail.com" required>
+                                <div class="invalid-feedback">Must be a valid @gmail.com address.</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="roleSelect" class="form-label fw-bold text-secondary small text-uppercase">Role <span class="text-danger">*</span></label>
+                                <select id="roleSelect" name="role" class="form-select bg-light" required>
+                                    <option value="">— Select a Role —</option>
+                                    {% for r in roles %}
+                                        <option value="{{ r.id }}">{{ r.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">Please assign a role.</div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <label for="passwordInput" class="form-label fw-bold text-secondary small text-uppercase">Password <span class="text-danger">*</span></label>
+                                
+                                <div class="input-group has-validation">
+                                    <input type="password" id="passwordInput" name="password" class="form-control bg-light border-end-0" minlength="8" required>
+                                    <button class="btn border border-start-0 bg-light text-muted" type="button" id="togglePasswordBtn">
+                                        <i class="bi bi-eye-slash-fill" id="togglePasswordIcon"></i>
+                                    </button>
+                                    <div class="invalid-feedback">Password is required and must be at least 8 characters.</div>
+                                </div>
+                                
+                                <div class="progress mt-2" style="height: 6px; border-radius: 10px; background-color: #e9ecef;">
+                                    <div id="password-strength-bar" class="progress-bar" role="progressbar" style="width: 0%; transition: width 0.4s ease, background-color 0.4s ease;"></div>
+                                </div>
+                                <div class="form-text small mt-1 d-flex justify-content-between">
+                                    <span>Strength: <span id="password-strength-text" class="fw-bold text-muted">None</span></span>
+                                    <span class="text-muted" style="font-size: 0.75rem;">(Needs 8+ chars, letters, numbers & symbols)</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <hr class="my-4 text-muted">
+
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'dashboard' %}" class="btn btn-light border me-2 px-4 fw-bold">Cancel</a>
+                            <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm">
+                                <i class="bi bi-person-check-fill me-2"></i>Create User
+                            </button>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    
+    // 1. SMART FORM VALIDATION
+    const form = document.getElementById('userCreationForm');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    }, false);
+
+    // 2. 🌟 TOGGLE PASSWORD VISIBILITY LOGIC
+    const toggleBtn = document.getElementById('togglePasswordBtn');
+    const pwdInput = document.getElementById('passwordInput');
+    const toggleIcon = document.getElementById('togglePasswordIcon');
+
+    toggleBtn.addEventListener('click', function() {
+        // Switch between 'password' and 'text'
+        const type = pwdInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        pwdInput.setAttribute('type', type);
+        
+        // Switch the icon visually
+        if (type === 'text') {
+            toggleIcon.classList.remove('bi-eye-slash-fill');
+            toggleIcon.classList.add('bi-eye-fill', 'text-primary'); // Make it blue when active
+        } else {
+            toggleIcon.classList.remove('bi-eye-fill', 'text-primary');
+            toggleIcon.classList.add('bi-eye-slash-fill');
+        }
+    });
+
+    // 3. PASSWORD STRENGTH LOGIC
+    const pwdBar = document.getElementById('password-strength-bar');
+    const pwdText = document.getElementById('password-strength-text');
+
+    pwdInput.addEventListener('input', function() {
+        const val = pwdInput.value;
+        let strength = 0;
+
+        if (val.length > 0) strength += 1;
+        if (val.length >= 8) strength += 1; 
+        if (/[A-Z]/.test(val)) strength += 1; 
+        if (/[0-9]/.test(val)) strength += 1; 
+        if (/[^A-Za-z0-9]/.test(val)) strength += 1; 
+
+        if (val.length === 0) {
+            pwdBar.style.width = '0%';
+            pwdBar.className = 'progress-bar';
+            pwdText.textContent = 'None';
+            pwdText.className = 'fw-bold text-muted';
+        } 
+        else if (strength <= 2) {
+            pwdBar.style.width = '33%';
+            pwdBar.className = 'progress-bar bg-danger'; 
+            pwdText.textContent = 'Weak';
+            pwdText.className = 'fw-bold text-danger';
+        } 
+        else if (strength <= 4) {
+            pwdBar.style.width = '66%';
+            pwdBar.className = 'progress-bar bg-warning'; 
+            pwdText.textContent = 'Medium';
+            pwdText.className = 'fw-bold text-warning';
+        } 
+        else {
+            pwdBar.style.width = '100%';
+            pwdBar.className = 'progress-bar bg-success'; 
+            pwdText.textContent = 'Strong';
+            pwdText.className = 'fw-bold text-success';
+        }
+    });
+
+});
+</script>
+
+{% endblock %}

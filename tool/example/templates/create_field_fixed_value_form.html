@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5 mb-5">
+<div class="card shadow border-0 p-4" style="max-width:900px; margin:auto; border-radius: 12px;">
+
+<h4 class="text-primary mb-4 fw-bold">Create Field Fixed Value</h4>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <label class="form-label fw-bold mt-1">Field Name</label>
+    </div>
+    <div class="col-md-6">
+        <select id="fieldDropdown" class="form-select bg-light border">
+            <option value="">— Select Field —</option>
+            {% for f in fields %}
+            <option value="{{ f.id }}">{{ f.field_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<div id="tableContainer" style="display:none;">
+    
+    <div class="d-flex justify-content-between align-items-end mb-3">
+        <h5 class="fw-bold text-secondary mb-0">Fixed Values</h5>
+        <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+            + Add New Value
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Fixed Value</th>
+                    <th>Explanation</th>
+                    <th class="text-center" style="width: 220px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="fixedValueTable">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Add Fixed Value</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form onsubmit="addFixedValue(event)">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <input type="hidden" name="field_id" id="selectedFieldId">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="fw-bold form-label">Fixed Value</label>
+                        <input type="text" name="value" class="form-control bg-light" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold form-label">Explanation</label>
+                        <input type="text" name="explanation" class="form-control bg-light" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success fw-bold px-4">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="modalContainer"></div>
+
+</div>
+</div>
+
+<script>
+// 🌟 HELPER FUNCTION: Generates the HTML for the buttons and row styling dynamically
+function getRowContent(item) {
+    let toggleBtn = item.is_deleted 
+        ? `<button class="btn btn-outline-secondary btn-sm fw-bold w-100" onclick="toggleFixedValue(${item.id})" title="Click to Make Active"><i class="bi bi-toggle-off me-1"></i> Inactive</button>`
+        : `<button class="btn btn-success btn-sm fw-bold shadow-sm w-100" onclick="toggleFixedValue(${item.id})" title="Click to Make Inactive"><i class="bi bi-toggle-on me-1"></i> Active</button>`;
+
+    return `
+        <td class="fw-bold">${item.value}</td>
+        <td>${item.explanation}</td>
+        <td class="text-center">
+            <div class="d-flex gap-2">
+                <button class="btn btn-warning btn-sm fw-bold w-100" data-bs-toggle="modal" data-bs-target="#editModal${item.id}">Edit</button>
+                ${toggleBtn}
+            </div>
+        </td>
+    `;
+}
+
+document.getElementById("fieldDropdown").addEventListener("change", function(){
+    var field_id = this.value;
+    document.getElementById("selectedFieldId").value = field_id;
+    if(field_id == ""){
+        document.getElementById("tableContainer").style.display = "none";
+        return;
+    }
+
+    fetch("/get-fixed-values/?field_id=" + field_id)
+    .then(response => response.json())
+    .then(data => {
+        var table = document.getElementById("fixedValueTable");
+        var modalContainer = document.getElementById("modalContainer");
+
+        table.innerHTML = "";
+        modalContainer.innerHTML = "";
+
+        data.forEach(function(item){
+            // Apply dimming class if inactive
+            let rowClass = item.is_deleted ? 'opacity-50 bg-light' : '';
+            table.innerHTML += `<tr id="row${item.id}" class="${rowClass}">${getRowContent(item)}</tr>`;
+
+            modalContainer.innerHTML += `
+            <div class="modal fade" id="editModal${item.id}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title fw-bold">Edit Fixed Value</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form onsubmit="updateFixedValue(event, ${item.id})">
+                            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                            <div class="modal-body p-4">
+                                <div class="mb-3">
+                                    <label class="fw-bold form-label">Fixed Value</label>
+                                    <input type="text" name="value" value="${item.value}" class="form-control bg-light" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="fw-bold form-label">Explanation</label>
+                                    <input type="text" name="explanation" value="${item.explanation}" class="form-control bg-light" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary fw-bold px-4">Update</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        document.getElementById("tableContainer").style.display = "block";
+    });
+});
+
+function addFixedValue(event){
+    event.preventDefault();
+    var field_id = document.getElementById("selectedFieldId").value;
+    var value = document.querySelector('#addModal input[name="value"]').value;
+    var explanation = document.querySelector('#addModal input[name="explanation"]').value;
+
+    fetch("/add-fixed-value/",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            "X-CSRFToken":"{{ csrf_token }}"
+        },
+        body:JSON.stringify({
+            field_id:field_id,
+            value:value,
+            explanation:explanation
+        })
+    })
+    .then(response=>response.json())
+    .then(data=>{
+        var table = document.getElementById("fixedValueTable");
+        var modalContainer = document.getElementById("modalContainer");
+        
+        let rowClass = data.is_deleted ? 'opacity-50 bg-light' : '';
+        table.innerHTML += `<tr id="row${data.id}" class="${rowClass}">${getRowContent(data)}</tr>`;
+
+        // Recreate the modal for the new item
+        modalContainer.innerHTML += `
+        <div class="modal fade" id="editModal${data.id}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title fw-bold">Edit Fixed Value</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form onsubmit="updateFixedValue(event, ${data.id})">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        <div class="modal-body p-4">
+                            <div class="mb-3">
+                                <label class="fw-bold form-label">Fixed Value</label>
+                                <input type="text" name="value" value="${data.value}" class="form-control bg-light" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-bold form-label">Explanation</label>
+                                <input type="text" name="explanation" value="${data.explanation}" class="form-control bg-light" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-bold px-4">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>`;
+
+        document.querySelector('#addModal input[name="value"]').value="";
+        document.querySelector('#addModal input[name="explanation"]').value="";
+        var modal = bootstrap.Modal.getInstance(document.getElementById("addModal"));
+        modal.hide();
+    });
+}
+
+function toggleFixedValue(id){
+    Swal.fire({
+        title: 'Change Status?',
+        text: "Are you sure you want to change the status of this fixed value?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#1E488F',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, change status!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            
+            // Show loading spinner while fetching
+            Swal.fire({
+                title: 'Updating...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            // Make the AJAX call
+            fetch("/toggle-fixed-value/" + id + "/",{
+                method:"POST",
+                headers:{
+                    "X-CSRFToken":"{{ csrf_token }}"
+                }
+            })
+            .then(response=>response.json())
+            .then(data=>{
+                var row = document.getElementById("row"+id);
+                row.innerHTML = getRowContent(data);
+                row.className = data.is_deleted ? 'opacity-50 bg-light' : '';
+                
+                // Close the loading spinner instantly
+                Swal.close(); 
+            });
+        }
+    });
+}
+
+function updateFixedValue(event,id){
+    event.preventDefault();
+    var modal = document.querySelector("#editModal"+id);
+    var value = modal.querySelector('input[name="value"]').value;
+    var explanation = modal.querySelector('input[name="explanation"]').value;
+
+    fetch("/edit-fixed-value/"+id+"/",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json",
+            "X-CSRFToken":"{{ csrf_token }}"
+        },
+        body:JSON.stringify({
+            value:value,
+            explanation:explanation
+        })
+    })
+    .then(response=>response.json())
+    .then(data=>{
+        var row = document.getElementById("row"+id);
+        row.innerHTML = getRowContent(data);
+        row.className = data.is_deleted ? 'opacity-50 bg-light' : '';
+
+        var modalInstance = bootstrap.Modal.getInstance(modal);
+        modalInstance.hide();
+    });
+}
+</script>
+
+{% endblock %}

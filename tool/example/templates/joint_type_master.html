@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5 mb-5">
+    <div class="card shadow border-0 p-4" style="max-width:800px; margin:auto; border-radius: 12px;">
+
+        <h4 class="text-primary mb-4 fw-bold">Joint Type Master</h4>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="jointTypeInput" class="form-label fw-bold mt-1">Joint Type</label>
+                </div>
+
+                <div class="col-md-8">
+                    <input type="text" id="jointTypeInput" name="joint_type" class="form-control bg-light" placeholder="Enter Joint type" required>
+                </div>
+            </div>
+
+            <div class="text-end mt-4">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary px-4 me-2">Cancel</a>
+                <button type="submit" class="btn btn-primary fw-bold px-4">Save</button>
+            </div>
+
+        </form>
+        
+        <hr class="mt-5 mb-4">
+
+        <h5 class="mb-3 fw-bold text-secondary">Saved Joint Types</h5>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Joint Type</th>
+                        <th class="text-center" style="width: 150px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for joint in joint_types %}
+                    <tr class="{% if joint.is_deleted %}opacity-50 bg-light{% endif %}">
+                        <td class="align-middle fw-bold">{{ joint.joint_type_name }}</td>
+                        <td class="text-center" style="white-space: nowrap;">
+                            
+                            <form action="{% url 'toggle_joint_type_status' joint.id %}" method="POST" style="display: inline;" onsubmit="confirmToggle(event, this, '{{ joint.joint_type_name|escapejs }}')">
+                                {% csrf_token %}
+                                {% if joint.is_deleted %}
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm fw-bold w-100" title="Click to Make Active">
+                                        <i class="bi bi-toggle-off me-1 fs-6 align-middle"></i> Inactive
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-success btn-sm fw-bold shadow-sm w-100" title="Click to Make Inactive">
+                                        <i class="bi bi-toggle-on me-1 fs-6 align-middle"></i> Active
+                                    </button>
+                                {% endif %}
+                            </form>
+
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="text-center text-muted py-4">No joint types saved yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+    </div>
+</div>
+
+{% endblock %}

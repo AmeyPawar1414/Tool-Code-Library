@@ -1,0 +1,64 @@
+INFO | 2026-04-28 09:21:08,327 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:21:14,157 | autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\example\settings.py changed, reloading.
+INFO | 2026-04-28 09:21:15,085 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:21:38,724 | autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\example\middleware.py changed, reloading.
+INFO | 2026-04-28 09:21:39,596 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:27:05,070 | autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\accounts\views.py changed, reloading.
+INFO | 2026-04-28 09:27:05,926 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:28:16,891 | autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\accounts\views.py changed, reloading.
+INFO | 2026-04-28 09:28:17,710 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:30:16,452 | autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\accounts\admin.py changed, reloading.
+INFO | 2026-04-28 09:30:17,271 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:30:18,916 | autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\accounts\admin.py changed, reloading.
+INFO | 2026-04-28 09:30:19,893 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:30:56,663 | autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\accounts\admin.py changed, reloading.
+INFO | 2026-04-28 09:30:57,507 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:30:59,157 | autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\accounts\admin.py changed, reloading.
+INFO | 2026-04-28 09:31:00,023 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:31:01,587 | autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\accounts\admin.py changed, reloading.
+INFO | 2026-04-28 09:31:02,537 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:31:07,406 | autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\accounts\admin.py changed, reloading.
+INFO | 2026-04-28 09:31:08,203 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:31:21,648 | basehttp | "GET / HTTP/1.1" 200 4654
+INFO | 2026-04-28 09:31:29,672 | views | SUCCESS: User 'admin' logged in from 127.0.0.1
+INFO | 2026-04-28 09:31:29,702 | basehttp | "POST / HTTP/1.1" 302 0
+INFO | 2026-04-28 09:31:29,822 | basehttp | "GET /dashboard/ HTTP/1.1" 200 22259
+INFO | 2026-04-28 09:32:03,754 | basehttp | "GET /admin/ HTTP/1.1" 200 16935
+INFO | 2026-04-28 09:32:07,035 | basehttp | "GET /admin/accounts/auditlog/ HTTP/1.1" 200 77735
+INFO | 2026-04-28 09:32:07,080 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:32:25,879 | basehttp | "GET /admin/ HTTP/1.1" 200 16935
+INFO | 2026-04-28 09:32:30,313 | basehttp | "GET /tool-code/ HTTP/1.1" 200 72747
+INFO | 2026-04-28 09:32:32,070 | basehttp | "GET /user-creation/ HTTP/1.1" 200 20143
+INFO | 2026-04-28 09:32:33,786 | basehttp | "GET /master-report/ HTTP/1.1" 200 36789
+INFO | 2026-04-28 09:32:35,933 | basehttp | "GET /create-field-fixed-value/ HTTP/1.1" 200 23623
+INFO | 2026-04-28 09:32:38,818 | basehttp | "GET /tool-code/ HTTP/1.1" 200 72747
+INFO | 2026-04-28 09:33:15,950 | basehttp | "GET /admin/ HTTP/1.1" 200 16935
+INFO | 2026-04-28 09:33:19,085 | basehttp | "GET /admin/accounts/auditlog/ HTTP/1.1" 200 77737
+INFO | 2026-04-28 09:33:19,162 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:33:34,046 | basehttp | "GET /admin/accounts/userprofile/ HTTP/1.1" 200 17165
+INFO | 2026-04-28 09:33:34,098 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:33:34,115 | basehttp | "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 304 0
+INFO | 2026-04-28 09:33:46,302 | basehttp | "GET /admin/accounts/toolrequest/ HTTP/1.1" 200 29861
+INFO | 2026-04-28 09:33:46,341 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:33:53,770 | basehttp | "GET /admin/accounts/supplier/ HTTP/1.1" 200 17033
+INFO | 2026-04-28 09:33:53,819 | basehttp | "GET /static/admin/img/icon-yes.svg HTTP/1.1" 304 0
+INFO | 2026-04-28 09:33:53,825 | basehttp | "GET /static/admin/img/icon-no.svg HTTP/1.1" 304 0
+INFO | 2026-04-28 09:33:53,832 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:33:56,413 | basehttp | "GET /admin/accounts/role/ HTTP/1.1" 200 20749
+INFO | 2026-04-28 09:33:56,482 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:34:00,995 | basehttp | "GET /admin/accounts/rawmaterial/ HTTP/1.1" 200 15553
+INFO | 2026-04-28 09:34:01,051 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:34:03,639 | basehttp | "GET /admin/accounts/jointtype/ HTTP/1.1" 200 15146
+INFO | 2026-04-28 09:34:03,674 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:34:06,604 | basehttp | "GET /admin/accounts/field/ HTTP/1.1" 200 16399
+INFO | 2026-04-28 09:34:06,657 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:34:11,280 | basehttp | "GET /admin/accounts/fieldfixedvalue/ HTTP/1.1" 200 18042
+INFO | 2026-04-28 09:34:11,319 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:34:15,392 | basehttp | "GET /admin/accounts/fieldattribute/ HTTP/1.1" 200 23356
+INFO | 2026-04-28 09:34:15,427 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:34:15,551 | basehttp | "GET /static/admin/img/sorting-icons.svg HTTP/1.1" 200 1097
+INFO | 2026-04-28 09:34:23,651 | basehttp | "GET /admin/accounts/fieldattributeoption/ HTTP/1.1" 200 15144
+INFO | 2026-04-28 09:34:23,697 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:34:38,001 | basehttp | "GET /admin/accounts/auditlog/ HTTP/1.1" 200 77737
+INFO | 2026-04-28 09:34:38,049 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:36:57,204 | autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\example\settings.py changed, reloading.

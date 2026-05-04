@@ -1,0 +1,56 @@
+INFO | 2026-04-28 09:36:58,355 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:37:17,380 | autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:37:19,898 | middleware | [200] GET / | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:37:19,900 | basehttp | "GET / HTTP/1.1" 200 4654
+INFO | 2026-04-28 09:37:28,919 | views | SUCCESS: User 'admin' logged in from 127.0.0.1
+INFO | 2026-04-28 09:37:28,942 | middleware | [302] POST / | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:37:28,948 | basehttp | "POST / HTTP/1.1" 302 0
+INFO | 2026-04-28 09:37:29,168 | middleware | [200] GET /dashboard/ | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:37:29,169 | basehttp | "GET /dashboard/ HTTP/1.1" 200 22259
+INFO | 2026-04-28 09:37:55,048 | middleware | [200] GET /tool-code/ | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:37:55,050 | basehttp | "GET /tool-code/ HTTP/1.1" 200 72747
+INFO | 2026-04-28 09:37:57,255 | middleware | [200] GET /user-creation/ | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:37:57,255 | basehttp | "GET /user-creation/ HTTP/1.1" 200 20143
+INFO | 2026-04-28 09:37:58,837 | middleware | [200] GET /master-report/ | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:37:58,838 | basehttp | "GET /master-report/ HTTP/1.1" 200 36789
+INFO | 2026-04-28 09:38:57,575 | basehttp | "GET /admin/ HTTP/1.1" 200 16935
+INFO | 2026-04-28 09:39:01,534 | basehttp | "GET /admin/accounts/auditlog/ HTTP/1.1" 200 77586
+INFO | 2026-04-28 09:39:01,580 | basehttp | "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO | 2026-04-28 09:39:15,012 | basehttp | "GET /admin/ HTTP/1.1" 200 16935
+INFO | 2026-04-28 09:40:40,302 | autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\example\settings.py changed, reloading.
+INFO | 2026-04-28 09:40:41,799 | django.utils.autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:41:25,859 | django.utils.autoreload | Watching for file changes with StatReloader
+INFO | 2026-04-28 09:41:28,681 | example.middleware | [200] GET / | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:41:28,683 | django.server | "GET / HTTP/1.1" 200 4654
+INFO | 2026-04-28 09:41:36,644 | accounts.views | SUCCESS: User 'admin' logged in from 127.0.0.1
+INFO | 2026-04-28 09:41:36,669 | example.middleware | [302] POST / | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:41:36,680 | django.server | "POST / HTTP/1.1" 302 0
+INFO | 2026-04-28 09:41:36,905 | example.middleware | [200] GET /dashboard/ | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:41:36,906 | django.server | "GET /dashboard/ HTTP/1.1" 200 22259
+INFO | 2026-04-28 09:41:38,915 | example.middleware | [200] GET /tool-code/ | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:41:38,917 | django.server | "GET /tool-code/ HTTP/1.1" 200 72747
+INFO | 2026-04-28 09:41:40,062 | example.middleware | [200] GET /user-creation/ | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:41:40,064 | django.server | "GET /user-creation/ HTTP/1.1" 200 20143
+INFO | 2026-04-28 09:41:41,324 | example.middleware | [200] GET /master-report/ | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:41:41,327 | django.server | "GET /master-report/ HTTP/1.1" 200 36789
+INFO | 2026-04-28 09:41:42,348 | example.middleware | [200] GET /tool-code/ | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:41:42,349 | django.server | "GET /tool-code/ HTTP/1.1" 200 72747
+INFO | 2026-04-28 09:41:43,138 | example.middleware | [200] GET /dashboard/ | User: admin | IP: 127.0.0.1
+INFO | 2026-04-28 09:41:43,140 | django.server | "GET /dashboard/ HTTP/1.1" 200 22259
+INFO | 2026-04-28 09:44:40,243 | django.utils.autoreload | C:\Users\namey\OneDrive\Desktop\Tool Code Library\tool\example\example\settings.py changed, reloading.
+INFO | 2026-04-28 09:46:10,492 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+ERROR | 2026-04-28 09:52:54,891 | accounts.views | FAILED LOGIN: Username 'advfsjvdc' from 127.0.0.1
+ERROR | 2026-04-28 09:53:01,998 | accounts.views | FAILED LOGIN: Username 'ashdfbc ' from 127.0.0.1
+ERROR | 2026-04-28 09:53:09,135 | accounts.views | FAILED LOGIN: Username 'safhreifh' from 127.0.0.1
+INFO | 2026-04-28 09:53:18,169 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+INFO | 2026-04-28 09:56:10,447 | accounts.views | TESTING THE LOG FILE: User 'user2' logged in.
+INFO | 2026-04-28 09:59:05,956 | accounts.views | TESTING THE LOG FILE: User 'testapprover' logged in.
+INFO | 2026-04-28 11:02:37,839 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+INFO | 2026-04-29 09:55:20,939 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+INFO | 2026-04-29 10:35:08,420 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+INFO | 2026-04-29 10:51:00,497 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+INFO | 2026-04-29 12:51:54,149 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+INFO | 2026-04-29 13:13:10,629 | accounts.views | TESTING THE LOG FILE: User 'testuser' logged in.
+INFO | 2026-04-29 13:13:36,918 | accounts.views | TESTING THE LOG FILE: User 'testapprover' logged in.
+INFO | 2026-04-29 13:14:24,669 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+INFO | 2026-04-30 09:00:01,068 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
