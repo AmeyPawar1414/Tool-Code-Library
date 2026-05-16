@@ -1,3 +1,5 @@
 ERROR | 2026-04-28 09:52:54,891 | accounts.views | FAILED LOGIN: Username 'advfsjvdc' from 127.0.0.1
 ERROR | 2026-04-28 09:53:01,998 | accounts.views | FAILED LOGIN: Username 'ashdfbc ' from 127.0.0.1
 ERROR | 2026-04-28 09:53:09,135 | accounts.views | FAILED LOGIN: Username 'safhreifh' from 127.0.0.1
+ERROR | 2026-05-15 21:38:04,086 | accounts.views | FAILED LOGIN: Username 'admin' from 127.0.0.1
+ERROR | 2026-05-16 09:16:40,337 | accounts.views | FAILED LOGIN: Username 'testuser' from 127.0.0.1

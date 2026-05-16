@@ -54,3 +54,14 @@ INFO | 2026-04-29 13:13:10,629 | accounts.views | TESTING THE LOG FILE: User 'te
 INFO | 2026-04-29 13:13:36,918 | accounts.views | TESTING THE LOG FILE: User 'testapprover' logged in.
 INFO | 2026-04-29 13:14:24,669 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
 INFO | 2026-04-30 09:00:01,068 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+INFO | 2026-05-07 09:13:44,326 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+INFO | 2026-05-15 21:34:21,372 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+INFO | 2026-05-15 21:37:17,818 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+WARNING | 2026-05-15 21:37:49,635 | accounts.views | BLOCKED LOGIN: User 'testuser' attempted login but role is deleted.
+ERROR | 2026-05-15 21:38:04,086 | accounts.views | FAILED LOGIN: Username 'admin' from 127.0.0.1
+INFO | 2026-05-15 21:38:16,023 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+INFO | 2026-05-16 09:12:43,041 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+ERROR | 2026-05-16 09:16:40,337 | accounts.views | FAILED LOGIN: Username 'testuser' from 127.0.0.1
+INFO | 2026-05-16 09:16:50,919 | accounts.views | TESTING THE LOG FILE: User 'testuser' logged in.
+INFO | 2026-05-16 09:17:22,176 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
+INFO | 2026-05-16 09:30:44,550 | accounts.views | TESTING THE LOG FILE: User 'admin' logged in.
