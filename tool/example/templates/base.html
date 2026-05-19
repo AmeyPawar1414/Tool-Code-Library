@@ -12,15 +12,14 @@
     <style>
         /* ── 1. GLOBAL CORPORATE BLUE THEME ── */
         :root {
-            /* Primary Action Blue (Buttons, Accents) */
             --bs-primary: #1E488F; 
             --bs-primary-rgb: 30, 72, 143;
-            /* Sidebar Deep Navy Blue */
             --sidebar-bg: #0B1B3D; 
             --sidebar-hover: #162A5A; 
             --sidebar-submenu: #071126;
-            /* Content Area Light Grey */
             --body-bg: #f4f6f9;
+            --sidebar-full-width: 260px;
+            --sidebar-icon-width: 60px;
         }
         
         body {
@@ -40,19 +39,66 @@
 
         /* ── 2. SIDEBAR STYLING ── */
         #sidebar {
-            width: 260px;
+            width: var(--sidebar-full-width);
             background-color: var(--sidebar-bg);
             color: #ffffff;
             display: flex;
             flex-direction: column;
-            transition: margin-left 0.3s ease; /* 🌟 Smooth sliding animation */
             z-index: 1040;
             box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+            /* Desktop default: collapsed to icon-only */
+            transition: width 0.3s ease;
+            overflow: hidden;
+            flex-shrink: 0;
         }
 
-        /* 🌟 NEW: Desktop Minimized State (Slides away to the left) */
-        #sidebar.minimized {
-            margin-left: -260px;
+        /* ── DESKTOP: Icon-only collapsed state ── */
+        @media (min-width: 769px) {
+            #sidebar {
+                width: var(--sidebar-icon-width);
+            }
+            /* Expand on hover */
+            #sidebar:hover {
+                width: var(--sidebar-full-width);
+            }
+
+            /* Hide text labels when collapsed, show on hover */
+            #sidebar .sidebar-label,
+            #sidebar .sidebar-title-text,
+            #sidebar .chevron-icon {
+                opacity: 0;
+                white-space: nowrap;
+                transition: opacity 0.2s ease;
+                overflow: hidden;
+            }
+            #sidebar:hover .sidebar-label,
+            #sidebar:hover .sidebar-title-text,
+            #sidebar:hover .chevron-icon {
+                opacity: 1;
+            }
+
+            /* Keep icons always visible and centered when collapsed */
+            #sidebar .nav-link {
+                justify-content: flex-start;
+            }
+            #sidebar .nav-link i:first-child {
+                min-width: 20px;
+                text-align: center;
+            }
+
+            /* Submenus: hide when sidebar is collapsed */
+            #sidebar .collapse,
+            #sidebar .collapse.show {
+                display: none !important;
+            }
+            #sidebar:hover .collapse.show {
+                display: block !important;
+            }
+
+            /* Header: icon only when collapsed */
+            .sidebar-header .sidebar-title-text {
+                display: inline;
+            }
         }
 
         .sidebar-header {
@@ -63,8 +109,16 @@
             color: #fff;
             text-decoration: none;
             letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            overflow: hidden;
         }
-        .sidebar-header i { margin-right: 10px; font-size: 1.4rem; }
+        .sidebar-header i { 
+            margin-right: 10px; 
+            font-size: 1.4rem; 
+            flex-shrink: 0;
+        }
         
         #sidebar .nav-link {
             color: #b8c7e0; 
@@ -74,8 +128,14 @@
             align-items: center;
             border-radius: 0;
             transition: all 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
         }
-        #sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
+        #sidebar .nav-link i:first-child { 
+            margin-right: 12px; 
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
         
         #sidebar .nav-link:hover, #sidebar .nav-link[aria-expanded="true"] {
             background-color: var(--sidebar-hover);
@@ -99,6 +159,13 @@
             border-left: 4px solid transparent;
         }
 
+        /* Tooltip for icon-only mode */
+        @media (min-width: 769px) {
+            #sidebar:not(:hover) .nav-link {
+                position: relative;
+            }
+        }
+
         /* ── 3. MAIN CONTENT AREA ── */
         #main-content {
             flex: 1;
@@ -107,7 +174,7 @@
             min-width: 0;
             height: 100vh;
             overflow-y: auto;
-            transition: width 0.3s;
+            transition: all 0.3s ease;
         }
         
         /* Top Navigation Bar */
@@ -123,14 +190,36 @@
             z-index: 1030;
         }
 
+        /* Hide the toggle button on desktop since we use hover */
+        @media (min-width: 769px) {
+            #sidebarToggleBtn {
+                display: none;
+            }
+        }
+
         /* ── 4. RESPONSIVE DESIGN (MOBILE) ── */
         @media (max-width: 768px) {
             #sidebar {
-                margin-left: -260px;
+                width: var(--sidebar-full-width);
+                margin-left: calc(-1 * var(--sidebar-full-width));
                 position: fixed;
                 height: 100%;
+                transition: margin-left 0.3s ease;
             }
-            #sidebar.active { margin-left: 0; }
+            #sidebar.active { 
+                margin-left: 0;
+                width: var(--sidebar-full-width);
+            }
+
+            /* On mobile always show all labels */
+            #sidebar .sidebar-label,
+            #sidebar .sidebar-title-text,
+            #sidebar .chevron-icon {
+                opacity: 1 !important;
+            }
+            #sidebar .collapse.show {
+                display: block !important;
+            }
             
             #sidebarOverlay {
                 display: none;
@@ -151,72 +240,97 @@
     <div id="sidebarOverlay"></div>
 
     <nav id="sidebar">
-        <a href="{% url 'dashboard' %}" class="sidebar-header d-flex align-items-center">
-            <i class="bi bi-layers-fill"></i> Tool Code Library
+        <a href="{% url 'dashboard' %}" class="sidebar-header">
+            <i class="bi bi-layers-fill"></i>
+            <span class="sidebar-title-text">Tool Code Library</span>
         </a>
         
         {% with current_url=request.resolver_match.url_name %}
         <div class="nav flex-column mt-3">
             
-            <a href="{% url 'dashboard' %}" class="nav-link {% if current_url == 'dashboard' %}active-tab{% endif %}">
-                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+            <a href="{% url 'dashboard' %}" class="nav-link {% if current_url == 'dashboard' %}active-tab{% endif %}" title="Dashboard">
+                <i class="bi bi-grid-1x2-fill"></i>
+                <span class="sidebar-label">Dashboard</span>
             </a>
 
             {% if role and role.can_access_tool_code %}
-            <a href="{% url 'tool_code' %}" class="nav-link {% if current_url == 'tool_code' %}active-tab{% endif %}">
-                <i class="bi bi-tools"></i> Tool Codes
+            <a href="{% url 'tool_code' %}" class="nav-link {% if current_url == 'tool_code' %}active-tab{% endif %}" title="Tool Codes">
+                <i class="bi bi-tools"></i>
+                <span class="sidebar-label">Tool Codes</span>
             </a>
             {% endif %}
 
             {% if role and role.can_access_master %}
             <a href="#masterSubmenu" data-bs-toggle="collapse" 
                aria-expanded="{% if current_url == 'create_field_form' or current_url == 'field_attribute_master' or current_url == 'create_field_fixed_value_form' or current_url == 'supplier_master' or current_url == 'raw_material_master' or current_url == 'joint_type_master' or current_url == 'role_master' or current_url == 'format_master' %}true{% else %}false{% endif %}" 
-               class="nav-link d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-database-fill"></i> Master Data</span>
-                <i class="bi bi-chevron-down" style="font-size: 0.8rem; margin-right: 0;"></i>
+               class="nav-link d-flex justify-content-between align-items-center"
+               title="Master Data">
+                <span style="display:flex;align-items:center;">
+                    <i class="bi bi-database-fill"></i>
+                    <span class="sidebar-label">Master Data</span>
+                </span>
+                <i class="bi bi-chevron-down chevron-icon" style="font-size: 0.8rem; margin-right: 0;"></i>
             </a>
             
             <div class="collapse sidebar-submenu {% if current_url == 'create_field_form' or current_url == 'field_attribute_master' or current_url == 'create_field_fixed_value_form' or current_url == 'supplier_master' or current_url == 'raw_material_master' or current_url == 'joint_type_master' or current_url == 'role_master' or current_url == 'format_master' %}show{% endif %}" id="masterSubmenu">
                 
-                <a href="{% url 'create_field_form' %}" class="nav-link {% if current_url == 'create_field_form' %}text-white fw-bold border-start border-light{% endif %}">Field Form</a>
+                <a href="{% url 'create_field_form' %}" class="nav-link {% if current_url == 'create_field_form' %}text-white fw-bold border-start border-light{% endif %}">
+                    <span class="sidebar-label">Field Form</span>
+                </a>
                 
-                <a href="{% url 'field_attribute_master' %}" class="nav-link {% if current_url == 'field_attribute_master' %}text-white fw-bold border-start border-light{% endif %}">Field Attributes</a>
+                <a href="{% url 'field_attribute_master' %}" class="nav-link {% if current_url == 'field_attribute_master' %}text-white fw-bold border-start border-light{% endif %}">
+                    <span class="sidebar-label">Field Attributes</span>
+                </a>
                 
-                <a href="{% url 'create_field_fixed_value_form' %}" class="nav-link {% if current_url == 'create_field_fixed_value_form' %}text-white fw-bold border-start border-light{% endif %}">Field Fixed Values</a>
+                <a href="{% url 'create_field_fixed_value_form' %}" class="nav-link {% if current_url == 'create_field_fixed_value_form' %}text-white fw-bold border-start border-light{% endif %}">
+                    <span class="sidebar-label">Field Fixed Values</span>
+                </a>
                 
-                <a href="{% url 'supplier_master' %}" class="nav-link {% if current_url == 'supplier_master' %}text-white fw-bold border-start border-light{% endif %}">Supplier</a>
+                <a href="{% url 'supplier_master' %}" class="nav-link {% if current_url == 'supplier_master' %}text-white fw-bold border-start border-light{% endif %}">
+                    <span class="sidebar-label">Supplier</span>
+                </a>
                 
-                <a href="{% url 'raw_material_master' %}" class="nav-link {% if current_url == 'raw_material_master' %}text-white fw-bold border-start border-light{% endif %}">Raw Material</a>
+                <a href="{% url 'raw_material_master' %}" class="nav-link {% if current_url == 'raw_material_master' %}text-white fw-bold border-start border-light{% endif %}">
+                    <span class="sidebar-label">Raw Material</span>
+                </a>
                 
-                <a href="{% url 'joint_type_master' %}" class="nav-link {% if current_url == 'joint_type_master' %}text-white fw-bold border-start border-light{% endif %}">Joint Type</a>
+                <a href="{% url 'joint_type_master' %}" class="nav-link {% if current_url == 'joint_type_master' %}text-white fw-bold border-start border-light{% endif %}">
+                    <span class="sidebar-label">Joint Type</span>
+                </a>
 
-                <a href="{% url 'format_master' %}" class="nav-link {% if current_url == 'format_master' %}text-white fw-bold border-start border-light{% endif %}">Format Master</a>
+                <a href="{% url 'format_master' %}" class="nav-link {% if current_url == 'format_master' %}text-white fw-bold border-start border-light{% endif %}">
+                    <span class="sidebar-label">Format Master</span>
+                </a>
                 
                 {% if role.can_manage_roles %}
                 <a href="{% url 'role_master' %}" class="nav-link {% if current_url == 'role_master' %}text-white fw-bold border-start border-light{% endif %}">
-                    <i class="bi bi-shield-lock-fill me-2"></i> Role Master
+                    <i class="bi bi-shield-lock-fill me-2"></i>
+                    <span class="sidebar-label">Role Master</span>
                 </a>
                 {% endif %}
             </div>
             {% endif %}
 
             {% if role and role.can_manage_users %}
-            <a href="{% url 'user_creation' %}" class="nav-link {% if current_url == 'user_creation' %}active-tab{% endif %}">
-                <i class="bi bi-people-fill"></i> User Creation
+            <a href="{% url 'user_creation' %}" class="nav-link {% if current_url == 'user_creation' %}active-tab{% endif %}" title="User Creation">
+                <i class="bi bi-people-fill"></i>
+                <span class="sidebar-label">User Creation</span>
             </a>
             {% endif %}
 
             {% if role and role.can_access_reports %}
-            <a href="{% url 'master_report' %}" class="nav-link {% if current_url == 'master_report' %}active-tab{% endif %}">
-                <i class="bi bi-bar-chart-fill"></i> Reports
+            <a href="{% url 'master_report' %}" class="nav-link {% if current_url == 'master_report' %}active-tab{% endif %}" title="Reports">
+                <i class="bi bi-bar-chart-fill"></i>
+                <span class="sidebar-label">Reports</span>
             </a>
             {% endif %}
         </div>
         {% endwith %}
 
         <div class="mt-auto mb-3">
-            <a href="{% url 'change_password' %}" class="nav-link {% if request.resolver_match.url_name == 'change_password' %}active-tab{% endif %}" style="font-size: 0.9rem;">
-                <i class="bi bi-key"></i> Change Password
+            <a href="{% url 'change_password' %}" class="nav-link {% if request.resolver_match.url_name == 'change_password' %}active-tab{% endif %}" style="font-size: 0.9rem;" title="Change Password">
+                <i class="bi bi-key"></i>
+                <span class="sidebar-label">Change Password</span>
             </a>
         </div>
     </nav>
@@ -228,6 +342,7 @@
         {% if request.user.is_authenticated %}
         <div class="topbar">
             
+            <!-- Only shown on mobile -->
             <button class="btn btn-link text-primary fs-3 p-0 me-3" id="sidebarToggleBtn">
                 <i class="bi bi-list"></i>
             </button>
@@ -237,6 +352,13 @@
                     <i class="bi bi-person-circle me-1" style="color: var(--bs-primary);"></i> {{ request.user.first_name|default:request.user.username }}
                 </span>
                 <span class="badge text-uppercase me-3" style="background-color: var(--sidebar-hover);">{{ request.user.userprofile.role.name|default:"User" }}</span>
+
+                <a href="{% static 'docs/User_Manual.pdf' %}" 
+                   download="Tool_Code_Library_User_Manual.pdf"
+                   class="btn btn-sm btn-outline-primary fw-bold shadow-sm me-2"
+                   title="Download User Manual">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> User Manual
+                </a>
                 
                 <a href="#" class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="confirmLogout(event)">
                     <i class="bi bi-power"></i> Logout
@@ -268,16 +390,12 @@
             const toggleBtn = document.getElementById('sidebarToggleBtn');
             const overlay = document.getElementById('sidebarOverlay');
 
-            // 🌟 NEW: Smart Toggle Logic (Adapts to Mobile vs Desktop)
+            // Mobile toggle only
             if(toggleBtn && sidebar) {
                 toggleBtn.addEventListener('click', function() {
                     if (window.innerWidth <= 768) {
-                        // Mobile: Slide in from the left overlay
                         sidebar.classList.toggle('active');
                         if(overlay) overlay.classList.toggle('active');
-                    } else {
-                        // Desktop: Slide away completely to give max width
-                        sidebar.classList.toggle('minimized');
                     }
                 });
             }

@@ -36,11 +36,21 @@
         
         <div class="card-header bg-white border-bottom p-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
             
-            <div class="btn-group shadow-sm" role="group" id="status-filter-group">
-                <button type="button" class="btn btn-dark active" onclick="setStatusFilter('All', this)">All</button>
-                <button type="button" class="btn btn-outline-dark" onclick="setStatusFilter('Pending', this)">Pending</button>
-                <button type="button" class="btn btn-outline-dark" onclick="setStatusFilter('Approved', this)">Approved</button>
-                <button type="button" class="btn btn-outline-dark" onclick="setStatusFilter('Rejected', this)">Rejected</button>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <div class="btn-group shadow-sm" role="group" id="status-filter-group">
+                    <button type="button" class="btn btn-dark active" onclick="setStatusFilter('All', this)">All</button>
+                    <button type="button" class="btn btn-outline-dark" onclick="setStatusFilter('Pending', this)">Pending</button>
+                    <button type="button" class="btn btn-outline-dark" onclick="setStatusFilter('Approved', this)">Approved</button>
+                    <button type="button" class="btn btn-outline-dark" onclick="setStatusFilter('Rejected', this)">Rejected</button>
+                </div>
+
+                <button 
+                    type="button" 
+                    class="btn btn-success shadow-sm fw-bold" 
+                    onclick="downloadExcel()"
+                    title="Download currently filtered records as styled Excel">
+                    <i class="bi bi-file-earmark-excel-fill me-1"></i> Download Excel
+                </button>
             </div>
 
             <div class="input-group shadow-sm" style="max-width: 300px;">
@@ -67,7 +77,15 @@
                     </thead>
                     <tbody class="text-start">
                         {% for req in requests %}
-                        <tr class="report-row">
+                        <tr class="report-row"
+                            data-created-by="{{ req.created_by.username }}"
+                            data-created-date="{{ req.created_at|date:'d M Y' }}"
+                            data-tool-code="{{ req.tool_code|default:'[Pending]' }}"
+                            data-description="{{ req.description.field_name }}"
+                            data-supplier1="{{ req.supplier1.supplier_name }}"
+                            data-supplier2="{{ req.supplier2.supplier_name|default:'-' }}"
+                            data-reviewed-by="{% if req.reviewed_by %}{{ req.reviewed_by.get_full_name|default:req.reviewed_by.username }}{% else %}-{% endif %}"
+                            data-status="{{ req.status }}">
                             <td class="ps-4 fw-bold">{{ req.created_by.username }}</td>
                             <td class="text-muted">{{ req.created_at|date:"d M Y" }}</td>
                             <td class="font-monospace text-primary fw-bold tool-code-cell">{{ req.tool_code|default:"[Pending]" }}</td>
@@ -90,7 +108,6 @@
                                     <span class="badge bg-warning bg-opacity-10 text-warning border border-warning">Pending</span>
                                 {% endif %}
                             </td>
-                            <!-- Download column — must be INSIDE the <tr> -->
                             <td class="text-center">
                                 <a href="{% url 'download_tool_request_pdf' req.id %}"
                                    class="btn btn-sm btn-outline-danger" title="Download PDF">
@@ -123,37 +140,35 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
 <script>
-let currentSearchQuery = '';
-let currentStatusFilter = 'All'; 
-let currentPage = 1;
-const rowsPerPage = 10;
+let currentSearchQuery  = '';
+let currentStatusFilter = 'All';
+let currentPage         = 1;
+const rowsPerPage       = 10;
+
+// Tracks ALL currently filtered rows (across all pages) for Excel export
+let currentFilteredRows = [];
 
 function setSearch(query) {
     currentSearchQuery = query.toLowerCase().trim();
-    currentPage = 1; 
+    currentPage = 1;
     applyTableLogic();
 }
 
-// Updated to handle active/inactive states of the dark buttons
 function setStatusFilter(status, btnElement) {
     currentStatusFilter = status;
-    currentPage = 1; 
-    
-    // Manage Button Group Styling
+    currentPage = 1;
+
     if (btnElement) {
-        // 1. Reset all buttons to outline
-        const buttons = document.querySelectorAll('#status-filter-group button');
-        buttons.forEach(btn => {
+        document.querySelectorAll('#status-filter-group button').forEach(btn => {
             btn.classList.remove('btn-dark', 'active');
             btn.classList.add('btn-outline-dark');
         });
-        
-        // 2. Set the clicked button to solid dark
         btnElement.classList.remove('btn-outline-dark');
         btnElement.classList.add('btn-dark', 'active');
     }
-
     applyTableLogic();
 }
 
@@ -164,68 +179,203 @@ function changePage(page) {
 
 function applyTableLogic() {
     const allRows = Array.from(document.querySelectorAll('.report-row'));
-    
-    // 1. Filter rows by Search Query AND Status Filter
-    const filteredRows = allRows.filter(row => {
-        const toolCodeText = row.querySelector('.tool-code-cell').innerText.toLowerCase();
-        const statusText = row.querySelector('.status-cell').innerText.trim();
-        
+
+    currentFilteredRows = allRows.filter(row => {
+        const toolCodeText  = row.querySelector('.tool-code-cell').innerText.toLowerCase();
+        const statusText    = row.querySelector('.status-cell').innerText.trim();
         const matchesSearch = toolCodeText.includes(currentSearchQuery);
         const matchesStatus = (currentStatusFilter === 'All') || (statusText === currentStatusFilter);
-
         return matchesSearch && matchesStatus;
     });
 
-    // 2. Hide all rows initially
     allRows.forEach(row => row.style.display = 'none');
 
-    // 3. Slice the filtered array to get only the rows for the current page
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    const rowsToShow = filteredRows.slice(startIndex, endIndex);
-
-    // 4. Show those specific rows
+    const start      = (currentPage - 1) * rowsPerPage;
+    const rowsToShow = currentFilteredRows.slice(start, start + rowsPerPage);
     rowsToShow.forEach(row => row.style.display = '');
 
-    // 5. Update Record Count 
-    document.getElementById('recordCount').innerText = filteredRows.length;
-
-    // 6. Build Pagination Buttons dynamically
-    buildPaginationControls(filteredRows.length);
+    document.getElementById('recordCount').innerText = currentFilteredRows.length;
+    buildPaginationControls(currentFilteredRows.length);
 }
 
-function buildPaginationControls(totalVisibleRows) {
-    const paginationContainer = document.getElementById('paginationContainer');
-    paginationContainer.innerHTML = ''; 
-    
-    const totalPages = Math.ceil(totalVisibleRows / rowsPerPage);
-    if (totalPages <= 1) return; 
+function buildPaginationControls(total) {
+    const container  = document.getElementById('paginationContainer');
+    container.innerHTML = '';
+    const totalPages = Math.ceil(total / rowsPerPage);
+    if (totalPages <= 1) return;
 
-    const prevDisabled = currentPage === 1 ? 'disabled' : '';
-    paginationContainer.innerHTML += `
-        <li class="page-item ${prevDisabled}">
-            <a class="page-link text-dark" href="javascript:void(0)" onclick="changePage(${currentPage - 1})">Previous</a>
-        </li>
-    `;
+    container.innerHTML += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+        <a class="page-link text-dark" href="javascript:void(0)" onclick="changePage(${currentPage - 1})">Previous</a></li>`;
 
     for (let i = 1; i <= totalPages; i++) {
-        const activeClass = i === currentPage ? 'active bg-dark border-dark text-white' : 'text-dark';
-        paginationContainer.innerHTML += `
-            <li class="page-item">
-                <a class="page-link ${activeClass}" href="javascript:void(0)" onclick="changePage(${i})">${i}</a>
-            </li>
-        `;
+        const cls = i === currentPage ? 'active bg-dark border-dark text-white' : 'text-dark';
+        container.innerHTML += `<li class="page-item">
+            <a class="page-link ${cls}" href="javascript:void(0)" onclick="changePage(${i})">${i}</a></li>`;
     }
 
-    const nextDisabled = currentPage === totalPages ? 'disabled' : '';
-    paginationContainer.innerHTML += `
-        <li class="page-item ${nextDisabled}">
-            <a class="page-link text-dark" href="javascript:void(0)" onclick="changePage(${currentPage + 1})">Next</a>
-        </li>
-    `;
+    container.innerHTML += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+        <a class="page-link text-dark" href="javascript:void(0)" onclick="changePage(${currentPage + 1})">Next</a></li>`;
 }
 
-document.addEventListener("DOMContentLoaded", function() {
+// ── STYLED EXCEL DOWNLOAD ──────────────────────────────────────────────────
+function downloadExcel() {
+    if (currentFilteredRows.length === 0) {
+        alert('No records to download. Please adjust your filters.');
+        return;
+    }
+
+    const headers = [
+        'Created By', 'Created Date', 'Tool Code', 'Primary Description',
+        'Supplier 1', 'Supplier 2', 'Reviewed By', 'Status'
+    ];
+
+    // ── 1. Raw data ────────────────────────────────────────────────────────
+    const wsData = [headers];
+    currentFilteredRows.forEach(row => {
+        wsData.push([
+            row.dataset.createdBy   || '',
+            row.dataset.createdDate || '',
+            row.dataset.toolCode    || '',
+            row.dataset.description || '',
+            row.dataset.supplier1   || '',
+            row.dataset.supplier2   || '',
+            row.dataset.reviewedBy  || '',
+            row.dataset.status      || '',
+        ]);
+    });
+
+    // ── 2. Worksheet & workbook (🌟 CHANGED XLSXStyle -> XLSX) ─────────────
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // ── 3. Column widths ───────────────────────────────────────────────────
+    ws['!cols'] = [
+        { wch: 16 }, // Created By
+        { wch: 14 }, // Created Date
+        { wch: 38 }, // Tool Code
+        { wch: 22 }, // Primary Description
+        { wch: 16 }, // Supplier 1
+        { wch: 16 }, // Supplier 2
+        { wch: 18 }, // Reviewed By
+        { wch: 13 }, // Status
+    ];
+
+    // ── 4. Row heights ─────────────────────────────────────────────────────
+    ws['!rows'] = [{ hpt: 30 }]; // taller header
+    for (let r = 1; r < wsData.length; r++) ws['!rows'].push({ hpt: 20 });
+
+    // ── 5. Freeze header ───────────────────────────────────────────────────
+    ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
+
+    // ── 6. Colour palette ──────────────────────────────────────────────────
+    const NAVY      = '0B1B3D';  // header background (matches sidebar)
+    const BLUE      = '1E488F';  // primary blue accent
+    const WHITE     = 'FFFFFF';
+    const STRIPE    = 'EEF2FA';  // alternating row tint
+    const BORDER_C  = 'D0D7E3';  // cell border colour
+    const DARK_TEXT = '1A1A2E';
+    const MID_TEXT  = '3A3A5C';
+
+    // Status traffic-light map  { background, font colour }
+    const STATUS_COLORS = {
+        'Approved': { bg: 'C6EFCE', fg: '276221' },
+        'Rejected': { bg: 'FFC7CE', fg: '9C0006' },
+        'Pending' : { bg: 'FFEB9C', fg: '9C6500' },
+    };
+
+    // Helper: build a uniform thin border in one colour
+    const border = (color = BORDER_C) => ({
+        top:    { style: 'thin', color: { rgb: color } },
+        bottom: { style: 'thin', color: { rgb: color } },
+        left:   { style: 'thin', color: { rgb: color } },
+        right:  { style: 'thin', color: { rgb: color } },
+    });
+
+    // Header bottom gets a medium accent line
+    const headerBorder = () => ({
+        top:    { style: 'thin',   color: { rgb: NAVY } },
+        bottom: { style: 'medium', color: { rgb: BLUE } },
+        left:   { style: 'thin',   color: { rgb: NAVY } },
+        right:  { style: 'thin',   color: { rgb: NAVY } },
+    });
+
+    // ── 7. Apply styles (🌟 CHANGED XLSXStyle -> XLSX) ─────────────────────
+    const totalRows = wsData.length;
+    const totalCols = headers.length;
+
+    for (let R = 0; R < totalRows; R++) {
+        for (let C = 0; C < totalCols; C++) {
+            const ref = XLSX.utils.encode_cell({ r: R, c: C });
+            if (!ws[ref]) ws[ref] = { v: '', t: 's' };
+
+            if (R === 0) {
+                // ── Header row ─────────────────────────────────────────
+                ws[ref].s = {
+                    fill:      { patternType: 'solid', fgColor: { rgb: NAVY } },
+                    font:      { bold: true, color: { rgb: WHITE }, sz: 11, name: 'Calibri' },
+                    alignment: { horizontal: 'center', vertical: 'center' },
+                    border:    headerBorder(),
+                };
+            } else {
+                // ── Data rows ──────────────────────────────────────────
+                const isStripe = R % 2 === 0;          // even row index → stripe
+                const rowBg    = isStripe ? STRIPE : WHITE;
+                const status   = wsData[R][7];
+
+                if (C === 7) {
+                    // Status cell — traffic-light highlight
+                    const sc = STATUS_COLORS[status] || { bg: 'F5F5F5', fg: '555555' };
+                    ws[ref].s = {
+                        fill:      { patternType: 'solid', fgColor: { rgb: sc.bg } },
+                        font:      { bold: true, sz: 10, name: 'Calibri', color: { rgb: sc.fg } },
+                        alignment: { horizontal: 'center', vertical: 'center' },
+                        border:    border(),
+                    };
+                } else if (C === 2) {
+                    // Tool Code — bold blue monospace feel
+                    ws[ref].s = {
+                        fill:      { patternType: 'solid', fgColor: { rgb: rowBg } },
+                        font:      { bold: true, sz: 10, name: 'Courier New', color: { rgb: BLUE } },
+                        alignment: { horizontal: 'left', vertical: 'center' },
+                        border:    border(),
+                    };
+                } else if (C === 0) {
+                    // Created By — slightly bold
+                    ws[ref].s = {
+                        fill:      { patternType: 'solid', fgColor: { rgb: rowBg } },
+                        font:      { bold: true, sz: 10, name: 'Calibri', color: { rgb: DARK_TEXT } },
+                        alignment: { horizontal: 'left', vertical: 'center' },
+                        border:    border(),
+                    };
+                } else {
+                    // All other data cells
+                    ws[ref].s = {
+                        fill:      { patternType: 'solid', fgColor: { rgb: rowBg } },
+                        font:      { sz: 10, name: 'Calibri', color: { rgb: MID_TEXT } },
+                        alignment: { horizontal: 'left', vertical: 'center' },
+                        border:    border(),
+                    };
+                }
+            }
+        }
+    }
+
+    // ── 8. Append sheet (🌟 CHANGED XLSXStyle -> XLSX) ─────────────────────
+    XLSX.utils.book_append_sheet(wb, ws, 'Tool Report');
+
+    // ── 9. Smart filename ──────────────────────────────────────────────────
+    const filterLabel = currentStatusFilter === 'All' ? 'All' : currentStatusFilter;
+    const searchLabel = currentSearchQuery   ? `_search-${currentSearchQuery}` : '';
+    const fromDate    = document.getElementById('fromDate').value;
+    const toDate      = document.getElementById('toDate').value;
+    const dateLabel   = (fromDate || toDate) ? `_${fromDate || 'start'}_to_${toDate || 'end'}` : '';
+    const filename    = `Master_Tool_Report_${filterLabel}${searchLabel}${dateLabel}.xlsx`;
+
+    // ── 10. Write & download (🌟 CHANGED XLSXStyle -> XLSX) ────────────────
+    XLSX.writeFile(wb, filename);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
     applyTableLogic();
 });
 </script>
