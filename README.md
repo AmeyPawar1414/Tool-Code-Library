@@ -1,310 +1,209 @@
-# 🔧 Tool Code Library
+# Tool Code Library
 
-A web-based Django application for managing and generating standardized tool codes in a manufacturing or procurement environment. It supports role-based access, multi-stage approval workflows, master data management, audit logging, and PDF export.
+A Django-based internal web application for creating, managing, and approving standardized tool codes. Built to streamline the tool request process with role-based access, an approval workflow, master data configuration, and PDF export.
 
-\---
+---
 
-## 📋 Table of Contents
+## Table of Contents
 
-* [Features](#features)
-* [Tech Stack](#tech-stack)
-* [Project Structure](#project-structure)
-* [Getting Started](#getting-started)
-* [Environment Setup](#environment-setup)
-* [Running the Project](#running-the-project)
-* [User Roles \& Permissions](#user-roles--permissions)
-* [Key Modules](#key-modules)
-* [Pushing to GitHub](#pushing-to-github)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [User Roles and Permissions](#user-roles-and-permissions)
+- [How Tool Codes Work](#how-tool-codes-work)
+- [Author](#author)
 
-\---
+---
 
-## ✨ Features
+## Features
 
-* **Dynamic Tool Code Generation** — Auto-generates unique tool codes (up to 40 characters) based on field attributes, material, joint type, and supplier data
-* **Role-Based Access Control (RBAC)** — Fully configurable roles with granular tab-level permissions
-* **Approval Workflow** — Submit → Pending → Approved / Rejected flow with rejection reasons
-* **Draft Support** — Save incomplete tool requests as drafts and submit later
-* **Master Data Management** — Manage Suppliers, Raw Materials, Joint Types, Fields, and Field Attributes
-* **PDF Export** — Download tool request details as a formatted PDF with configurable footer
-* **Audit Logging** — Tracks all user actions (logins, approvals, errors) in both the database and log files
-* **Soft Delete** — Records are deactivated rather than permanently deleted to preserve data integrity
-* **Responsive UI** — Built with Django templates and a clean base layout
+- **Tool Code Generation** — Automatically generates unique, structured tool codes (max 40 characters) from field attributes, raw material, joint type, and supplier data
+- **Role-Based Access Control** — Configurable roles with per-tab permission toggles managed from the UI
+- **Approval Workflow** — Requests move through Draft → Pending → Approved / Rejected states
+- **Draft Support** — Users can save incomplete requests and return to finish them later
+- **Master Data Management** — Full CRUD for Suppliers, Raw Materials, Joint Types, Fields, and Field Attributes
+- **PDF Export** — Download any tool request as a formatted PDF with a configurable footer
+- **Audit Logging** — All actions (logins, approvals, errors) are logged to both the database and log files
+- **Soft Delete** — Nothing is permanently deleted; records are deactivated to preserve data history
 
-\---
+---
 
-## 🛠 Tech Stack
+## Tech Stack
 
-|Layer|Technology|
-|-|-|
-|Backend|Python 3.x, Django|
-|Database|SQLite3 (development)|
-|Frontend|Django Templates, HTML/CSS/JS|
-|PDF Export|Custom PDF generator (`pdf\_generator.py`)|
-|Auth|Django built-in auth + custom UserProfile|
-|Logging|Python `logging` module + Django DB (`AuditLog`)|
+| Layer      | Technology                                        |
+|------------|---------------------------------------------------|
+| Backend    | Python 3.x, Django                                |
+| Database   | SQLite3                                           |
+| Frontend   | Django Templates, HTML, CSS, JavaScript           |
+| PDF Export | ReportLab via custom `pdf_generator.py`           |
+| Auth       | Django built-in auth extended with `UserProfile`  |
+| Logging    | Python `logging` + Django ORM (`AuditLog` model)  |
 
-\---
+---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-tool/example/
-├── accounts/                  # Main Django app
-│   ├── migrations/            # Database migrations
-│   ├── management/            # Custom management commands
-│   ├── models.py              # All data models
-│   ├── views.py               # All view logic
-│   ├── urls.py                # App-level URL routing
-│   ├── admin.py               # Django admin configuration
-│   ├── pdf\_generator.py       # PDF export logic
-│   └── tests.py
-├── example/                   # Django project config
-│   ├── settings.py
-│   ├── urls.py
-│   ├── middleware.py          # Custom middleware (audit logging)
-│   ├── asgi.py
-│   └── wsgi.py
-├── templates/                 # HTML templates
-│   ├── base.html
-│   ├── dashboard.html
-│   ├── tool\_code.html
-│   ├── review\_request.html
-│   ├── master\_report.html
-│   ├── role\_master.html
-│   ├── user\_creation.html
-│   └── ...
-├── static/                    # Static assets (CSS, JS, images)
-├── logs/                      # Log files
-│   ├── activity.log
-│   ├── audit.log
-│   └── error.log
-├── db.sqlite3
-└── manage.py
+Tool-Code-Library/
+├── README.md
+└── tool/
+    └── example/
+        ├── accounts/
+        │   ├── migrations/
+        │   ├── management/
+        │   ├── models.py          # All data models
+        │   ├── views.py           # All view and business logic
+        │   ├── urls.py            # App URL routes
+        │   ├── admin.py
+        │   ├── pdf_generator.py   # PDF export logic
+        │   └── tests.py
+        ├── example/
+        │   ├── settings.py
+        │   ├── urls.py
+        │   ├── middleware.py      # Audit logging middleware
+        │   ├── asgi.py
+        │   └── wsgi.py
+        ├── templates/
+        │   ├── base.html
+        │   ├── dashboard.html
+        │   ├── tool_code.html
+        │   ├── review_request.html
+        │   ├── master_report.html
+        │   ├── role_master.html
+        │   ├── user_creation.html
+        │   └── ...
+        ├── static/
+        ├── logs/
+        │   ├── activity.log
+        │   ├── audit.log
+        │   └── error.log
+        ├── db.sqlite3
+        └── manage.py
 ```
 
-\---
+---
 
-## ⚙️ Getting Started
+## Getting Started
 
 ### Prerequisites
 
-* Python 3.9 or higher
-* pip
-* Git
+- Python 3.9+
+- pip
+- Git
 
-### 1\. Clone the Repository
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/tool-code-library.git
-cd tool-code-library
+git clone https://github.com/AmeyPawar1414/Tool-Code-Library.git
+cd Tool-Code-Library
 ```
 
-### 2\. Create and Activate a Virtual Environment
+### 2. Create and activate a virtual environment
 
 **Windows (PowerShell):**
-
 ```powershell
 python -m venv venv
-.\\venv\\Scripts\\Activate.ps1
+.\venv\Scripts\Activate.ps1
+```
+
+**Windows (Git Bash):**
+```bash
+python -m venv venv
+source venv/Scripts/activate
 ```
 
 **macOS / Linux:**
-
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-\---
-
-## 🔧 Environment Setup
-
-### 3\. Install Dependencies
+### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-> If `requirements.txt` doesn't exist yet, generate it with:
-> ```bash
-> pip freeze > requirements.txt
-> ```
-
-### 4\. Apply Migrations
+### 4. Run migrations
 
 ```bash
-cd example
+cd tool/example
 python manage.py migrate
 ```
 
-### 5\. Create a Superuser
+### 5. Create a superuser
 
 ```bash
 python manage.py createsuperuser
 ```
 
-Follow the prompts to set a username, email, and password. This account will have full access.
+After creating the superuser, go to `/admin/` and:
+1. Create a **Role** with all permissions enabled (e.g. "Super Admin")
+2. Create a **UserProfile** linking that role to your superuser
 
-> \*\*Important:\*\* After creating the superuser, log in to the Django Admin (`/admin/`) and:
-> 1. Create a \*\*Role\*\* (e.g., "Super Admin") with all permissions enabled
-> 2. Assign it to the superuser via \*\*UserProfile\*\*
-
-\---
-
-## 🚀 Running the Project
+### 6. Start the development server
 
 ```bash
 python manage.py runserver
 ```
 
-Visit: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser.
 
-\---
+---
 
-## 👥 User Roles \& Permissions
+## User Roles and Permissions
 
-Roles are fully configurable from the **Role Master** tab. Each role has the following toggleable permissions:
+Roles are created and managed from the **Role Master** tab in the application. Each role has the following configurable permissions:
 
-|Permission|Description|
-|-|-|
-|`can\_access\_tool\_code`|View the Tool Code tab|
-|`can\_create\_requests`|Create and edit tool requests|
-|`can\_approve\_requests`|Approve or reject pending requests|
-|`can\_access\_master`|Access all Master Data tabs|
-|`can\_access\_reports`|View the Master Report|
-|`can\_manage\_users`|Create new user accounts|
-|`can\_manage\_roles`|Create and manage roles|
+| Permission             | What it controls                          |
+|------------------------|-------------------------------------------|
+| `can_access_tool_code` | View the Tool Code tab                    |
+| `can_create_requests`  | Create and edit tool requests             |
+| `can_approve_requests` | Approve or reject pending requests        |
+| `can_access_master`    | Access all Master Data tabs               |
+| `can_access_reports`   | View the Master Report                    |
+| `can_manage_users`     | Create new user accounts                  |
+| `can_manage_roles`     | Create and manage roles                   |
 
-> The \*\*Super Admin\*\* role is protected and cannot be deactivated.
+The **Super Admin** role is protected and cannot be deactivated.
 
-\---
+---
 
-## 📦 Key Modules
+## How Tool Codes Work
 
-### Tool Code Generation
-
-Tool codes are auto-generated using a dynamic algorithm that combines:
-
-* Field short code
-* Fixed value
-* Attribute values (text truncated to 2 chars, numbers kept full)
-* Joint type (first letter)
-* Raw material (first 2 letters)
-
-Codes are guaranteed unique (appends `-01`, `-02`, etc. if needed) and capped at **40 characters**.
-
-### Approval Workflow
+Tool codes are built automatically from the request data using this format:
 
 ```
-\[Draft] → \[Pending] → \[Approved]
-                    ↘ \[Rejected] → (user edits) → \[Pending]
+SHORT_CODE - FIXED_VALUE - ATTR1 X ATTR2 - ATTR3 - JOINT[0] - MATERIAL[0:2]
 ```
 
-### Audit Logging
+Rules:
+- Text attribute values are truncated to 2 uppercase characters
+- Number attribute values are kept as-is (e.g. `14`, `1.5`, `1/2`)
+- Total length is capped at **40 characters**
+- If a generated code already exists, a counter suffix is appended (`-01`, `-02`, etc.)
 
-Every significant action is logged to:
-
-* **Database** (`AuditLog` model) — queryable from Django Admin
-* **Log files** — `activity.log`, `audit.log`, `error.log` under `/logs/`
-
-### Soft Delete
-
-All master data (Fields, Suppliers, Materials, Roles, etc.) supports soft delete — records are marked `is\_deleted=True` rather than removed, preserving referential integrity.
-
-\---
-
-## 🚢 Pushing to GitHub
-
-### First-Time Setup
-
-#### 1\. Create a `.gitignore` file
-
-Create a file named `.gitignore` in the root of your project with the following content:
+Workflow states:
 
 ```
-# Python
-\_\_pycache\_\_/
-\*.py\[cod]
-\*.pyo
-\*.pyd
-.Python
-
-# Virtual environment
-venv/
-env/
-ENV/
-
-# Django
-\*.log
-\*.pot
-\*.pyc
-db.sqlite3
-media/
-
-# Environment variables
-.env
-\*.env
-
-# VS Code
-.vscode/
-
-# OS
-.DS\_Store
-Thumbs.db
+[Draft] → [Pending] → [Approved]
+                    ↘ [Rejected] → (user edits and resubmits) → [Pending]
 ```
 
-#### 2\. Initialize Git and Push
+---
 
-```bash
-# Navigate to your project root (where manage.py is NOT — one level up)
-cd "C:\\Users\\namey\\OneDrive\\Desktop\\Tool Code Library\\tool"
-
-# Initialize git
-git init
-
-# Stage all files
-git add .
-
-# First commit
-git commit -m "Initial commit: Tool Code Library Django project"
-
-# Connect to your GitHub repository
-git remote add origin https://github.com/your-username/your-repo-name.git
-
-# Push to GitHub
-git branch -M main
-git push -u origin main
-```
-
-#### 3\. Create the GitHub Repository First
-
-Before pushing:
-
-1. Go to [https://github.com/new](https://github.com/new)
-2. Name your repo (e.g., `tool-code-library`)
-3. Keep it **empty** (no README, no .gitignore — you're adding your own)
-4. Copy the remote URL and use it in the `git remote add origin` command above
-
-\---
-
-### Subsequent Pushes
+## Pushing Updates to GitHub
 
 ```bash
 git add .
-git commit -m "Your commit message here"
+git commit -m "Your message here"
 git push
 ```
 
-\---
+---
 
-## 📄 License
+## Author
 
-This project is for internal use. Add a license here if you plan to make it public.
-
-\---
-
-## 🙋 Author
-
-Built and maintained by **Amey Pawar**.  
-For questions or issues, open a GitHub Issue or reach out directly.
-
+**Amey Pawar**  
+GitHub: [@AmeyPawar1414](https://github.com/AmeyPawar1414)
